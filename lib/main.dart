@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:recipify/core/theme/app_theme.dart';
-import 'package:recipify/features/auth/screens/login_screen.dart';
+import 'package:recipify/features/splash/screens/splash_screen.dart';
 
 Future<void> main() async {
   FlutterError.onError = (details) {
@@ -35,7 +35,7 @@ class RecipifyApp extends StatelessWidget {
       title: 'Recipify',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
