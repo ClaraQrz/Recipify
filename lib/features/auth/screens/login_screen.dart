@@ -168,11 +168,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(
                                     color: AppTheme.textGray, fontSize: 13),
                               ),
-                              GestureDetector(
-                                onTap: () => Navigator.push(
+                              TextButton(
+                                onPressed: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const CadastroScreen()),
+                                  MaterialPageRoute(builder: (_) => const CadastroScreen()),
+                                ),
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: Text(
                                   'Cadastre-se',
@@ -186,15 +190,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             ],
                           ),
                           // Espaço para o chapéu não sobrepor o texto
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 70),
                         ],
                       ),
                     ),
 
                     // Chapéu flutuando no canto inferior direito do card
                     Positioned(
-                      bottom: -60,
-                      right: -20, // leve inclinação ~17 graus
+                      bottom: -100,
+                      right: -20, // leve inclinação 
                         child: Image.asset(
                           'assets/images/chefhat.png',
                           height: 160,

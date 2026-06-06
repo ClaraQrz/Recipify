@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:recipify/services/database_service.dart';
+import 'package:recipify/services/supabase_service.dart';
 
 class AuthService {
   static final AuthService instance = AuthService._internal();
@@ -10,14 +10,12 @@ class AuthService {
   Map<String, dynamic>? get usuarioLogado => _usuarioLogado;
   bool get estaLogado => _usuarioLogado != null;
 
+  final _client = SupabaseService.instance.client;
+
   String _hashSenha(String senha) {
     final bytes = utf8.encode(senha);
     return sha256.convert(bytes).toString();
   }
-
-  String _gerarId() =>
-      DateTime.now().millisecondsSinceEpoch.toString() +
-      (1000 + (999 * (DateTime.now().microsecond / 1000000)).round()).toString();
 
   Future<Map<String, dynamic>> cadastrar({
     required String apelido,
@@ -25,54 +23,54 @@ class AuthService {
     required String senha,
     String? dataAniversario,
   }) async {
-    final db = await DatabaseService.instance.db;
+    // Verifica se email já existe
+    final existente = await _client
+        .from('usuario')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
 
-    final existente = await db.query(
-      'usuario',
-      where: 'email = ?',
-      whereArgs: [email],
-    );
-
-    if (existente.isNotEmpty) {
+    if (existente != null) {
       return {'sucesso': false, 'erro': 'E-mail já cadastrado.'};
     }
 
-    final usuario = {
-      'id': _gerarId(),
-      'apelido': apelido,
-      'email': email,
-      'senha_hash': _hashSenha(senha),
-      'eh_oficial': 0,
-      'tema': 'claro',
-      'notif_vencimento': 1,
-      'notif_feed': 1,
-      'data_aniversario': dataAniversario,
-      'criado_em': DateTime.now().toIso8601String(),
-    };
+    // Insere novo usuário — id é gerado pelo Supabase (gen_random_uuid)
+    final novoUsuario = await _client
+        .from('usuario')
+        .insert({
+          'apelido': apelido,
+          'email': email,
+          'senha_hash': _hashSenha(senha),
+          'eh_oficial': false,
+          'tema': 'claro',
+          'notif_vencimento': true,
+          'notif_feed': true,
+          'data_aniversario': dataAniversario,
+        })
+        .select()
+        .single();
 
-    await db.insert('usuario', usuario);
-    _usuarioLogado = usuario;
-    return {'sucesso': true, 'usuario': usuario};
+    _usuarioLogado = novoUsuario;
+    return {'sucesso': true, 'usuario': novoUsuario};
   }
 
   Future<Map<String, dynamic>> login({
     required String email,
     required String senha,
   }) async {
-    final db = await DatabaseService.instance.db;
+    final resultado = await _client
+        .from('usuario')
+        .select()
+        .eq('email', email)
+        .eq('senha_hash', _hashSenha(senha))
+        .maybeSingle();
 
-    final resultado = await db.query(
-      'usuario',
-      where: 'email = ? AND senha_hash = ?',
-      whereArgs: [email, _hashSenha(senha)],
-    );
-
-    if (resultado.isEmpty) {
+    if (resultado == null) {
       return {'sucesso': false, 'erro': 'E-mail ou senha incorretos.'};
     }
 
-    _usuarioLogado = resultado.first;
-    return {'sucesso': true, 'usuario': resultado.first};
+    _usuarioLogado = resultado;
+    return {'sucesso': true, 'usuario': resultado};
   }
 
   void logout() {

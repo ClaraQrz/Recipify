@@ -6,7 +6,7 @@ class AppTheme {
   static const Color secondary  = Color(0xFFFFC15E); // amarelo dourado
 
   // Fundos
-  static const Color background = Color(0xFFFFC15E); // fundo amarelo
+  static const Color background = Color(0xFFFFC15E); // fundo amarelo0xFFFFC15E
   static const Color surface    = Color(0xFFF6DFBA); // creme dos cards
   static const Color cardBg     = Color(0xFFF5EDE0); // branco quente
 
