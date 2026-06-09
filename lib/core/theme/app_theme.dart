@@ -21,7 +21,7 @@ class AppTheme {
 
   static ThemeData get light => ThemeData(
     useMaterial3: true,
-    scaffoldBackgroundColor: background,
+    scaffoldBackgroundColor: cardBg,
     colorScheme: ColorScheme.fromSeed(
       seedColor: primary,
       surface: surface,

@@ -16,13 +16,29 @@ class DatabaseService {
     final path = join(await getDatabasesPath(), 'recipify.db');
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS lista_item_livre (
+          id TEXT PRIMARY KEY,
+          lista_id TEXT NOT NULL,
+          nome TEXT NOT NULL,
+          quantidade TEXT NOT NULL,
+          comprado INTEGER NOT NULL DEFAULT 0,
+          criado_em TEXT NOT NULL,
+          FOREIGN KEY (lista_id) REFERENCES lista(id)
+        )
+      ''');
+    }
+  }
+
   Future<void> _onCreate(Database db, int version) async {
-    // Ingredientes em cache local (espelho do Supabase)
     await db.execute('''
       CREATE TABLE ingrediente (
         id TEXT PRIMARY KEY,
@@ -32,7 +48,6 @@ class DatabaseService {
       )
     ''');
 
-    // Listas de compras — totalmente offline
     await db.execute('''
       CREATE TABLE lista (
         id TEXT PRIMARY KEY,
@@ -58,7 +73,6 @@ class DatabaseService {
       )
     ''');
 
-    // Estoque — totalmente offline
     await db.execute('''
       CREATE TABLE estoque (
         id TEXT PRIMARY KEY,
@@ -71,6 +85,18 @@ class DatabaseService {
         atualizado_em TEXT NOT NULL,
         UNIQUE(usuario_id, ingrediente_id),
         FOREIGN KEY (ingrediente_id) REFERENCES ingrediente(id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE lista_item_livre (
+        id TEXT PRIMARY KEY,
+        lista_id TEXT NOT NULL,
+        nome TEXT NOT NULL,
+        quantidade TEXT NOT NULL,
+        comprado INTEGER NOT NULL DEFAULT 0,
+        criado_em TEXT NOT NULL,
+        FOREIGN KEY (lista_id) REFERENCES lista(id)
       )
     ''');
   }

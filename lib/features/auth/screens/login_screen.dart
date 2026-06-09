@@ -32,10 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailCtrl.text.trim(),
         senha: _senhaCtrl.text,
       );
-
       if (!mounted) return;
       setState(() => _carregando = false);
-
       if (result['sucesso']) {
         Navigator.pushReplacement(
           context,
@@ -72,8 +70,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
-
-                // Logo
                 Center(
                   child: Image.asset(
                     'assets/images/Logo.png',
@@ -91,12 +87,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-
-                // Card de login com chapéu flutuando no canto inferior direito
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    // Card principal
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -171,12 +164,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextButton(
                                 onPressed: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => const CadastroScreen()),
+                                  MaterialPageRoute(
+                                      builder: (_) => const CadastroScreen()),
                                 ),
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: Text(
                                   'Cadastre-se',
@@ -189,27 +184,21 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
-                          // Espaço para o chapéu não sobrepor o texto
                           const SizedBox(height: 70),
                         ],
                       ),
                     ),
-
-                    // Chapéu flutuando no canto inferior direito do card
                     Positioned(
-                      bottom: -100,
-                      right: -20, // leve inclinação 
-                        child: Image.asset(
-                          'assets/images/chefhat.png',
-                          height: 160,
-                        ),
+                      bottom: -60,
+                      right: -20,
+                      child: Image.asset(
+                        'assets/images/chefhat.png',
+                        height: 160,
                       ),
+                    ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
-
-                // Pular
                 TextButton(
                   onPressed: _irParaHome,
                   child: Text(
@@ -221,7 +210,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 32),
               ],
             ),
