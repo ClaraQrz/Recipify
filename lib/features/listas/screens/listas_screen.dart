@@ -323,6 +323,15 @@ class _ListaCardState extends State<_ListaCard> {
   }
 
   @override
+  void didUpdateWidget(covariant _ListaCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    _marcados = widget.itens
+        .map((i) => i['comprado'] as bool)
+        .toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(

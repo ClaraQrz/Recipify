@@ -35,7 +35,19 @@ class RecipifyApp extends StatelessWidget {
       title: 'Recipify',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      scrollBehavior: NoStretchScrollBehavior(),
       home: const SplashScreen(),
     );
+  }
+}
+
+class NoStretchScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
   }
 }
