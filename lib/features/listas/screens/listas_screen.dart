@@ -123,6 +123,38 @@ class _ListasScreenState extends State<ListasScreen> {
     );
   }
 
+  Future<void> _confirmarDeletarLista(String listaId, String nome) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardBg,
+        title: const Text('Excluir lista',
+            style: TextStyle(color: AppTheme.textDark)),
+        content: Text(
+          'Tem certeza que quer excluir "$nome"? Todos os itens serão removidos.',
+          style: const TextStyle(color: AppTheme.textDark),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar',
+                style: TextStyle(color: AppTheme.textGray)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Excluir',
+                style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      await ListaRepository.instance.deletarLista(listaId);
+      _carregarListas();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -164,14 +196,12 @@ class _ListasScreenState extends State<ListasScreen> {
                               children: [
                                 Icon(Icons.list_alt_outlined,
                                     size: 64,
-                                    color:
-                                        AppTheme.textGray.withOpacity(0.4)),
+                                    color: AppTheme.textGray.withOpacity(0.4)),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Nenhuma lista ainda.',
                                   style: TextStyle(
-                                    color:
-                                        AppTheme.textGray.withOpacity(0.6),
+                                    color: AppTheme.textGray.withOpacity(0.6),
                                     fontSize: 15,
                                   ),
                                 ),
@@ -184,6 +214,8 @@ class _ListasScreenState extends State<ListasScreen> {
                                 const SizedBox(height: 16),
                             itemBuilder: (context, index) {
                               final lista = _listas[index];
+                              final listaId = lista['id'] as String;
+                              final listaNome = lista['nome'] as String;
                               final itens = (lista['itens'] as List)
                                   .map((i) => {
                                         'id': i['id'] as String,
@@ -198,19 +230,30 @@ class _ListasScreenState extends State<ListasScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) => DetalheListaScreen(
-                                        listaId: lista['id'] as String,
-                                        listaNome: lista['nome'] as String,
+                                        listaId: listaId,
+                                        listaNome: listaNome,
                                       ),
                                     ),
                                   );
                                   _carregarListas();
                                 },
+                                // Segura o card para excluir a lista
+                                onLongPress: () =>
+                                    _confirmarDeletarLista(listaId, listaNome),
                                 child: _ListaCard(
-                                  nome: lista['nome'] as String,
+                                  listaId: listaId,
+                                  nome: listaNome,
                                   itens: itens,
                                   onToggleItem: (itemId, comprado) =>
                                       ListaRepository.instance
                                           .toggleItem(itemId, comprado),
+                                  onDeleteItem: (itemId) async {
+                                    await ListaRepository.instance
+                                        .deletarItem(itemId);
+                                    _carregarListas();
+                                  },
+                                  onDeleteLista: () =>
+                                      _confirmarDeletarLista(listaId, listaNome),
                                 ),
                               );
                             },
@@ -230,14 +273,20 @@ class _ListasScreenState extends State<ListasScreen> {
 }
 
 class _ListaCard extends StatefulWidget {
+  final String listaId;
   final String nome;
   final List<Map<String, dynamic>> itens;
   final Future<void> Function(String itemId, bool comprado) onToggleItem;
+  final Future<void> Function(String itemId) onDeleteItem;
+  final VoidCallback onDeleteLista;
 
   const _ListaCard({
+    required this.listaId,
     required this.nome,
     required this.itens,
     required this.onToggleItem,
+    required this.onDeleteItem,
+    required this.onDeleteLista,
   });
 
   @override
@@ -269,6 +318,7 @@ class _ListaCardState extends State<_ListaCard> {
       ),
       child: Column(
         children: [
+          // Cabeçalho com nome e botão de excluir lista
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
             child: Row(
@@ -287,8 +337,8 @@ class _ListaCardState extends State<_ListaCard> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppTheme.primary,
                     borderRadius: BorderRadius.circular(20),
@@ -302,13 +352,20 @@ class _ListaCardState extends State<_ListaCard> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
+                // Botão excluir lista
+                IconButton(
+                  onPressed: widget.onDeleteLista,
+                  icon: const Icon(Icons.delete_outline,
+                      color: Colors.red, size: 20),
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Excluir lista',
+                ),
                 Checkbox(
-                  value:
-                      _marcados.isNotEmpty && _marcados.every((m) => m),
+                  value: _marcados.isNotEmpty && _marcados.every((m) => m),
                   onChanged: (v) {
-                    setState(() => _marcados =
-                        List.filled(widget.itens.length, v!));
+                    setState(
+                        () => _marcados = List.filled(widget.itens.length, v!));
                     for (final item in widget.itens) {
                       widget.onToggleItem(item['id'] as String, v!);
                     }
@@ -321,82 +378,69 @@ class _ListaCardState extends State<_ListaCard> {
               ],
             ),
           ),
+          // Itens com swipe para deletar
           ...List.generate(widget.itens.length, (i) {
             final item = widget.itens[i];
-            final isLast = i == widget.itens.length - 1;
             return Column(
               children: [
                 const Divider(height: 1, color: Color(0xFFE0C9A6)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item['nome'] as String,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textDark,
-                            decoration: _marcados[i]
-                                ? TextDecoration.lineThrough
-                                : null,
+                Dismissible(
+                  key: Key(item['id'] as String),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 16),
+                    color: Colors.red.withOpacity(0.15),
+                    child: const Icon(Icons.delete_outline, color: Colors.red),
+                  ),
+                  onDismissed: (_) =>
+                      widget.onDeleteItem(item['id'] as String),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item['nome'] as String,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textDark,
+                              decoration: _marcados[i]
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
                           ),
                         ),
-                      ),
-                      Text(
-                        item['qtd'] as String,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textDark,
+                        Text(
+                          item['qtd'] as String,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textDark,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Checkbox(
-                        value: _marcados[i],
-                        onChanged: (v) {
-                          setState(() => _marcados[i] = v!);
-                          widget.onToggleItem(item['id'] as String, v!);
-                        },
-                        activeColor: AppTheme.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4)),
-                        side: const BorderSide(color: AppTheme.textGray),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Checkbox(
+                          value: _marcados[i],
+                          onChanged: (v) {
+                            setState(() => _marcados[i] = v!);
+                            widget.onToggleItem(item['id'] as String, v!);
+                          },
+                          activeColor: AppTheme.primary,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4)),
+                          side: const BorderSide(color: AppTheme.textGray),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                if (isLast) ...[
-                  const Divider(height: 1, color: Color(0xFFE0C9A6)),
-                  _linhaVazia(),
-                  const Divider(height: 1, color: Color(0xFFE0C9A6)),
-                  _linhaVazia(),
-                  const SizedBox(height: 4),
-                ],
               ],
             );
           }),
-        ],
-      ),
-    );
-  }
-
-  Widget _linhaVazia() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppTheme.textGray),
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
+          const SizedBox(height: 4),
         ],
       ),
     );

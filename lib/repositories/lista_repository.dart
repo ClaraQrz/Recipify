@@ -111,4 +111,29 @@ class ListaRepository {
       whereArgs: [itemId],
     );
   }
+
+  // NOVO: deleta um item da lista
+  Future<void> deletarItem(String itemId) async {
+    final db = await DatabaseService.instance.db;
+    await db.delete(
+      'lista_item_livre',
+      where: 'id = ?',
+      whereArgs: [itemId],
+    );
+  }
+
+  // NOVO: deleta a lista e todos os seus itens
+  Future<void> deletarLista(String listaId) async {
+    final db = await DatabaseService.instance.db;
+    await db.delete(
+      'lista_item_livre',
+      where: 'lista_id = ?',
+      whereArgs: [listaId],
+    );
+    await db.delete(
+      'lista',
+      where: 'id = ?',
+      whereArgs: [listaId],
+    );
+  }
 }
