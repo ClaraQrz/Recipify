@@ -29,6 +29,29 @@ class ListaRepository {
     return lista;
   }
 
+  Future<void> definirFavorita(
+    String usuarioId,
+    String listaId,
+  ) async {
+    final db = await DatabaseService.instance.db;
+
+    // remove favorita atual
+    await db.update(
+      'lista',
+      {'eh_favorita': 0},
+      where: 'dono_id = ?',
+      whereArgs: [usuarioId],
+    );
+
+    // marca a nova favorita
+    await db.update(
+      'lista',
+      {'eh_favorita': 1},
+      where: 'id = ?',
+      whereArgs: [listaId],
+    );
+  }
+
   Future<List<Map<String, dynamic>>> todasAsListas(String usuarioId) async {
     final db = await DatabaseService.instance.db;
 

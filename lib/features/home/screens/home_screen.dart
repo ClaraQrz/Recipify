@@ -9,15 +9,19 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   bool _carregando = true;
 
   List<Map<String, dynamic>> _topSemanal = [];
   Map<String, dynamic>?      _listaFav;
   List<Map<String, dynamic>> _vencendo   = [];
+
+  Future<void> recarregar() async {
+    await _carregar();
+  }
 
   @override
   void initState() {
@@ -244,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           size: 6, color: AppTheme.primary),
                       const SizedBox(width: 8),
                       Text(
-                        '${_fmt(item['quantidade'])} ${item['unidade']} de ${item['ingrediente']}',
+                        '${item['nome']} (${item['quantidade']})',
                         style: const TextStyle(fontSize: 13),
                       ),
                     ]),
@@ -289,7 +293,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _fmt(dynamic valor) {
-    final n = (valor as num).toDouble();
-    return n == n.truncateToDouble() ? n.toInt().toString() : n.toString();
+    if (valor is num) {
+      final n = valor.toDouble();
+
+      return n == n.truncateToDouble()
+          ? n.toInt().toString()
+          : n.toString();
+    }
+
+    return valor.toString();
   }
 }

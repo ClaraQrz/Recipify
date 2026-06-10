@@ -216,6 +216,7 @@ class _ListasScreenState extends State<ListasScreen> {
                               final lista = _listas[index];
                               final listaId = lista['id'] as String;
                               final listaNome = lista['nome'] as String;
+                              final favorita = lista['eh_favorita'] == 1;
                               final itens = (lista['itens'] as List)
                                   .map((i) => {
                                         'id': i['id'] as String,
@@ -241,9 +242,23 @@ class _ListasScreenState extends State<ListasScreen> {
                                 onLongPress: () =>
                                     _confirmarDeletarLista(listaId, listaNome),
                                 child: _ListaCard(
-                                  listaId: listaId,
-                                  nome: listaNome,
-                                  itens: itens,
+                                    listaId: listaId,
+                                    nome: listaNome,
+                                    itens: itens,
+                                    favorita: favorita,
+                                    onFavoritar: () async {
+                                      final usuarioId =
+                                          AuthService.instance.usuarioLogado?['id']?.toString();
+
+                                      if (usuarioId == null) return;
+
+                                      await ListaRepository.instance.definirFavorita(
+                                        usuarioId,
+                                        listaId,
+                                      );
+
+                                      _carregarListas();
+                                    },
                                   onToggleItem: (itemId, comprado) =>
                                       ListaRepository.instance
                                           .toggleItem(itemId, comprado),
@@ -276,14 +291,19 @@ class _ListaCard extends StatefulWidget {
   final String listaId;
   final String nome;
   final List<Map<String, dynamic>> itens;
+  final bool favorita;
+  final VoidCallback onFavoritar;
   final Future<void> Function(String itemId, bool comprado) onToggleItem;
   final Future<void> Function(String itemId) onDeleteItem;
   final VoidCallback onDeleteLista;
+
 
   const _ListaCard({
     required this.listaId,
     required this.nome,
     required this.itens,
+    required this.favorita,
+    required this.onFavoritar,
     required this.onToggleItem,
     required this.onDeleteItem,
     required this.onDeleteLista,
@@ -353,6 +373,17 @@ class _ListaCardState extends State<_ListaCard> {
                   ),
                 ),
                 const SizedBox(width: 4),
+                IconButton(
+                  onPressed: widget.onFavoritar,
+                  icon: Icon(
+                    widget.favorita
+                        ? Icons.star
+                        : Icons.star_border,
+                    color: Colors.amber,
+                    size: 22,
+                  ),
+                  tooltip: 'Favoritar lista',
+                ),
                 // Botão excluir lista
                 IconButton(
                   onPressed: widget.onDeleteLista,
