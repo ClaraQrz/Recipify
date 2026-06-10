@@ -19,7 +19,7 @@ class ReceitaRepository {
             titulo,
             imagem_url,
             media_estrelas,
-            usuario ( apelido )
+            usuario!receita_autor_id_fkey ( apelido )
           )
         ''')
         .order('posicao', ascending: true)
@@ -45,7 +45,7 @@ class ReceitaRepository {
           media_estrelas,
           total_avaliacoes,
           criado_em,
-          usuario ( id, apelido )
+          usuario!receita_autor_id_fkey ( id, apelido )
         ''')
         .eq('publicada', true);
 
@@ -76,7 +76,7 @@ class ReceitaRepository {
             media_estrelas,
             total_avaliacoes,
             criado_em,
-            usuario ( id, apelido )
+            usuario!receita_autor_id_fkey ( id, apelido )
           )
         ''')
         .eq('usuario_id', uid);
@@ -105,7 +105,7 @@ class ReceitaRepository {
           total_avaliacoes,
           publicada,
           criado_em,
-          usuario ( id, apelido )
+          usuario!receita_autor_id_fkey ( id, apelido )
         ''')
         .eq('autor_id', uid)
         .order('criado_em', ascending: false);

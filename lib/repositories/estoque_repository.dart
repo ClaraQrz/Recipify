@@ -1,4 +1,5 @@
 import 'package:recipify/services/database_service.dart';
+import 'package:sqflite/sqflite.dart';
 
 class EstoqueRepository {
   static final EstoqueRepository instance = EstoqueRepository._internal();
@@ -33,5 +34,15 @@ class EstoqueRepository {
     ''', [hojeStr, usuarioId, limite, hojeStr]);
 
     return List<Map<String, dynamic>>.from(resultado);
+  }
+
+  /// Total de itens no estoque do usuário
+  Future<int> contarItens(String usuarioId) async {
+    final db = await DatabaseService.instance.db;
+    final resultado = await db.rawQuery(
+      'SELECT COUNT(*) as total FROM estoque WHERE usuario_id = ?',
+      [usuarioId],
+    );
+    return Sqflite.firstIntValue(resultado) ?? 0;
   }
 }
