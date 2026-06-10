@@ -111,4 +111,19 @@ class ListaRepository {
       whereArgs: [itemId],
     );
   }
+
+  /// Fixa ou desfixa uma lista como favorita no home
+  Future<void> fixarLista(String listaId, bool fixar) async {
+    final db = await DatabaseService.instance.db;
+    // Desfixar todas primeiro (só uma pode estar fixada)
+    await db.update('lista', {'eh_favorita': 0});
+    if (fixar) {
+      await db.update(
+        'lista',
+        {'eh_favorita': 1},
+        where: 'id = ?',
+        whereArgs: [listaId],
+      );
+    }
+  }
 }

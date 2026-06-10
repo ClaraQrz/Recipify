@@ -22,8 +22,13 @@ class DatabaseService {
     );
   }
 
+  Future<void> _onCreate(Database db, int version) async {
+    await _criarTabelas(db);
+  }
+
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
+      // Adiciona tabela lista_item_livre se vier de versão antiga
       await db.execute('''
         CREATE TABLE IF NOT EXISTS lista_item_livre (
           id TEXT PRIMARY KEY,
@@ -38,7 +43,7 @@ class DatabaseService {
     }
   }
 
-  Future<void> _onCreate(Database db, int version) async {
+  Future<void> _criarTabelas(Database db) async {
     await db.execute('''
       CREATE TABLE ingrediente (
         id TEXT PRIMARY KEY,
@@ -59,17 +64,16 @@ class DatabaseService {
       )
     ''');
 
+    // Tabela livre — itens com nome e quantidade como texto
     await db.execute('''
-      CREATE TABLE lista_item (
+      CREATE TABLE lista_item_livre (
         id TEXT PRIMARY KEY,
         lista_id TEXT NOT NULL,
-        ingrediente_id TEXT NOT NULL,
-        quantidade REAL NOT NULL,
-        unidade TEXT NOT NULL,
+        nome TEXT NOT NULL,
+        quantidade TEXT NOT NULL,
         comprado INTEGER NOT NULL DEFAULT 0,
         criado_em TEXT NOT NULL,
-        FOREIGN KEY (lista_id) REFERENCES lista(id),
-        FOREIGN KEY (ingrediente_id) REFERENCES ingrediente(id)
+        FOREIGN KEY (lista_id) REFERENCES lista(id)
       )
     ''');
 
@@ -85,18 +89,6 @@ class DatabaseService {
         atualizado_em TEXT NOT NULL,
         UNIQUE(usuario_id, ingrediente_id),
         FOREIGN KEY (ingrediente_id) REFERENCES ingrediente(id)
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE lista_item_livre (
-        id TEXT PRIMARY KEY,
-        lista_id TEXT NOT NULL,
-        nome TEXT NOT NULL,
-        quantidade TEXT NOT NULL,
-        comprado INTEGER NOT NULL DEFAULT 0,
-        criado_em TEXT NOT NULL,
-        FOREIGN KEY (lista_id) REFERENCES lista(id)
       )
     ''');
   }

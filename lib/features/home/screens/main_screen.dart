@@ -8,6 +8,9 @@ import 'package:recipify/features/estoque/screens/estoque_screen.dart';
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
+  static _MainScreenState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MainScreenState>();
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
@@ -15,15 +18,19 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    ReceitasScreen(),
-    ListasScreen(),
-    EstoqueScreen(),
-  ];
+  void irParaAba(int index) {
+    setState(() => _currentIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      const HomeScreen(),
+      const ReceitasScreen(),
+      const ListasScreen(),
+      const EstoqueScreen(),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 16,
@@ -38,10 +45,10 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      body: _screens[_currentIndex],
+      body: screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: irParaAba,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined),        label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined),   label: 'Receitas'),
