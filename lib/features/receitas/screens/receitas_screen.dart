@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:recipify/core/theme/app_theme.dart';
 import 'package:recipify/repositories/receita_repository.dart';
 import 'package:recipify/features/receitas/screens/postar_receita_screen.dart';
+import 'package:recipify/features/receitas/screens/minhas_receitas_screen.dart';
+import 'package:recipify/features/receitas/screens/receita_detalhe_screen.dart';
 
 class ReceitasScreen extends StatefulWidget {
   const ReceitasScreen({super.key});
@@ -13,8 +15,8 @@ class ReceitasScreen extends StatefulWidget {
 class _ReceitasScreenState extends State<ReceitasScreen> {
   final _searchCtrl = TextEditingController();
 
-  bool _carregando      = true;
-  bool _mostrando       = false; // true = favoritas
+  bool _carregando       = true;
+  bool _mostrando        = false;
   String _categoriaAtiva = 'Todas';
 
   List<Map<String, dynamic>> _todasReceitas = [];
@@ -62,8 +64,9 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
 
   void _filtrar() {
     final busca = _searchCtrl.text.toLowerCase();
-    List<Map<String, dynamic>> base =
-        _mostrando ? _todasReceitas.where((r) => _favoritas.contains(r['id'])).toList() : _todasReceitas;
+    List<Map<String, dynamic>> base = _mostrando
+        ? _todasReceitas.where((r) => _favoritas.contains(r['id'])).toList()
+        : _todasReceitas;
 
     if (_categoriaAtiva != 'Todas') {
       base = base.where((r) => r['categoria'] == _categoriaAtiva).toList();
@@ -72,7 +75,7 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
     if (busca.isNotEmpty) {
       base = base.where((r) {
         final titulo = (r['titulo'] as String).toLowerCase();
-        final autor  = ((r['usuario'] as Map)['apelido'] as String).toLowerCase();
+        final autor = ((r['usuario'] as Map?)?['apelido'] as String? ?? '').toLowerCase();
         return titulo.contains(busca) || autor.contains(busca);
       }).toList();
     }
@@ -102,6 +105,34 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
     await ReceitaRepository.instance.toggleFavorito(receitaId, favoritado);
   }
 
+  void _abrirDetalhe(Map<String, dynamic> receita) {
+    final id = receita['id'] as String;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReceitaDetalheScreen(
+          receita:    receita,
+          favoritada: _favoritas.contains(id),
+        ),
+      ),
+    );
+  }
+
+  void _abrirPostarReceita() async {
+    final criou = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const PostarReceitaScreen()),
+    );
+    if (criou == true) _carregar();
+  }
+
+  void _abrirMinhasReceitas() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MinhasReceitasScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,10 +146,10 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
                 Expanded(
                   child: TextField(
                     controller: _searchCtrl,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Buscar receita...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      prefixIcon: Icon(Icons.search, size: 20),
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
                       isDense: true,
                     ),
                   ),
@@ -145,8 +176,8 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
               itemCount: _categorias.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, i) {
-                final cat    = _categorias[i];
-                final ativo  = cat == _categoriaAtiva;
+                final cat   = _categorias[i];
+                final ativo = cat == _categoriaAtiva;
                 return GestureDetector(
                   onTap: () => _selecionarCategoria(cat),
                   child: Container(
@@ -198,23 +229,20 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
         ],
       ),
 
-      // Botões flutuantes
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Livrinho — minhas receitas
           FloatingActionButton.small(
             heroTag: 'minhas',
             backgroundColor: AppTheme.cardBg,
             foregroundColor: AppTheme.primary,
-            onPressed: () => _abrirMinhasReceitas(),
+            onPressed: _abrirMinhasReceitas,
             child: const Icon(Icons.menu_book),
           ),
           const SizedBox(height: 10),
-          // + postar receita
           FloatingActionButton(
             heroTag: 'postar',
-            onPressed: () => _abrirPostarReceita(),
+            onPressed: _abrirPostarReceita,
             child: const Icon(Icons.add),
           ),
         ],
@@ -223,99 +251,102 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
   }
 
   Widget _receitaCard(Map<String, dynamic> receita) {
-    final id        = receita['id'] as String;
-    final titulo    = receita['titulo'] as String;
-    final autor     = (receita['usuario'] as Map)['apelido'] as String;
-    final tempo     = receita['tempo_minutos'] as int?;
-    final categoria = receita['categoria'] as String?;
-    final imgUrl    = receita['imagem_url'] as String?;
-    final media     = (receita['media_estrelas'] as num?)?.toDouble() ?? 0;
+    debugPrint('KEYS DA RECEITA: ${receita.keys.toList()}');
+    debugPrint('USUARIO MAP: ${receita['usuario']}');
+    final id         = receita['id'] as String;
+    final titulo     = receita['titulo'] as String;
+    final usuarioMap = receita['usuario'];
+    final autor = usuarioMap is Map ? (usuarioMap['apelido'] as String? ?? 'Desconhecido') : 'Desconhecido';
+    final tempo      = receita['tempo_minutos'] as int?;
+    final categoria  = receita['categoria'] as String?;
+    final imgUrl     = receita['imagem_url'] as String?;
+    final media      = (receita['media_estrelas'] as num?)?.toDouble() ?? 0;
     final favoritado = _favoritas.contains(id);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Imagem
-          if (imgUrl != null && imgUrl.isNotEmpty)
-            Image.network(
-              imgUrl,
-              height: 160,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _imagemPlaceholder(),
-            )
-          else
-            _imagemPlaceholder(),
+    return GestureDetector(
+      onTap: () => _abrirDetalhe(receita),
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (imgUrl != null && imgUrl.isNotEmpty)
+              Image.network(
+                imgUrl,
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _imagemPlaceholder(),
+              )
+            else
+              _imagemPlaceholder(),
 
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        titulo,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          titulo,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () => _toggleFavorito(id),
-                      child: Icon(
-                        favoritado ? Icons.favorite : Icons.favorite_border,
-                        color: AppTheme.primary,
-                        size: 22,
+                      GestureDetector(
+                        onTap: () => _toggleFavorito(id),
+                        child: Icon(
+                          favoritado ? Icons.favorite : Icons.favorite_border,
+                          color: AppTheme.primary,
+                          size: 22,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    if (tempo != null) ...[
-                      const Icon(Icons.timer_outlined,
-                          size: 14, color: AppTheme.textGray),
-                      const SizedBox(width: 3),
-                      Text(_formatarTempo(tempo),
-                          style: const TextStyle(
-                              fontSize: 12, color: AppTheme.textGray)),
-                      const SizedBox(width: 10),
                     ],
-                    if (categoria != null) ...[
-                      const Icon(Icons.label_outline,
-                          size: 14, color: AppTheme.textGray),
-                      const SizedBox(width: 3),
-                      Text(categoria,
-                          style: const TextStyle(
-                              fontSize: 12, color: AppTheme.textGray)),
-                      const SizedBox(width: 10),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (tempo != null) ...[
+                        const Icon(Icons.timer_outlined,
+                            size: 14, color: AppTheme.textGray),
+                        const SizedBox(width: 3),
+                        Text(_formatarTempo(tempo),
+                            style: const TextStyle(
+                                fontSize: 12, color: AppTheme.textGray)),
+                        const SizedBox(width: 10),
+                      ],
+                      if (categoria != null) ...[
+                        const Icon(Icons.label_outline,
+                            size: 14, color: AppTheme.textGray),
+                        const SizedBox(width: 3),
+                        Text(categoria,
+                            style: const TextStyle(
+                                fontSize: 12, color: AppTheme.textGray)),
+                        const SizedBox(width: 10),
+                      ],
+                      if (media > 0) ...[
+                        const Icon(Icons.star, size: 14, color: Colors.amber),
+                        const SizedBox(width: 3),
+                        Text(media.toStringAsFixed(1),
+                            style: const TextStyle(
+                                fontSize: 12, color: AppTheme.textGray)),
+                      ],
+                      const Spacer(),
+                      Text(
+                        'Por: $autor',
+                        style: const TextStyle(
+                            fontSize: 12, color: AppTheme.textGray),
+                      ),
                     ],
-                    if (media > 0) ...[
-                      const Icon(Icons.star, size: 14, color: Colors.amber),
-                      const SizedBox(width: 3),
-                      Text(media.toStringAsFixed(1),
-                          style: const TextStyle(
-                              fontSize: 12, color: AppTheme.textGray)),
-                    ],
-                    const Spacer(),
-                    Text(
-                      'Por: $autor',
-                      style: const TextStyle(
-                          fontSize: 12, color: AppTheme.textGray),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -324,8 +355,7 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
         height: 160,
         width: double.infinity,
         color: AppTheme.surface,
-        child: const Icon(Icons.restaurant,
-            size: 48, color: AppTheme.textGray),
+        child: const Icon(Icons.restaurant, size: 48, color: AppTheme.textGray),
       );
 
   String _formatarTempo(int minutos) {
@@ -334,17 +364,4 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
     final m = minutos % 60;
     return m == 0 ? '${h}h' : '${h}h${m}min';
   }
-
-  void _abrirPostarReceita() async {
-  final criou = await Navigator.push<bool>(
-    context,
-    MaterialPageRoute(builder: (_) => const PostarReceitaScreen()),
-  );
-  if (criou == true) _carregar();
-}
-void _abrirMinhasReceitas() {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Minhas receitas — em breve!')),
-  );
-}
 }

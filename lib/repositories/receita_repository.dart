@@ -8,18 +8,18 @@ class ReceitaRepository {
   final _client = SupabaseService.instance.client;
 
   /// Top 5 da semana via tabela top_semanal do Supabase
-  Future<List<Map<String, dynamic>>> topSemanal({int limite = 5}) async {
+  Future<List<Map<String, dynamic>>> topSemanal({int limite = 3}) async {
     final resultado = await _client
         .from('top_semanal')
         .select('''
           posicao,
           pontuacao,
-          receita (
+          receita!top_semanal_receita_id_fkey (
             id,
             titulo,
             imagem_url,
             media_estrelas,
-            usuario!receita_autor_id_fkey ( apelido )
+            usuario!receita_autor_id_fkey ( id, apelido )
           )
         ''')
         .order('posicao', ascending: true)
@@ -130,6 +130,27 @@ class ReceitaRepository {
         'receita_id': receitaId,
       });
     }
+  }
+
+  Future<Map<String, dynamic>?> buscarPorId(String id) async {
+    final resultado = await _client
+        .from('receita')
+        .select('''
+          id,
+          titulo,
+          descricao,
+          tempo_minutos,
+          porcoes,
+          categoria,
+          imagem_url,
+          media_estrelas,
+          total_avaliacoes,
+          criado_em,
+          usuario!receita_autor_id_fkey ( id, apelido )
+        ''')
+        .eq('id', id)
+        .maybeSingle();
+    return resultado;
   }
 
   /// IDs das receitas favoritadas pelo usuário (para marcar coração na lista)

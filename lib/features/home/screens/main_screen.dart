@@ -8,6 +8,9 @@ import 'package:recipify/features/estoque/screens/estoque_screen.dart';
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
+  static _MainScreenState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MainScreenState>();
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
@@ -16,13 +19,11 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final _homeKey = GlobalKey<HomeScreenState>();
-
   late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
-
     _screens = [
       HomeScreen(key: _homeKey),
       const ReceitasScreen(),
@@ -31,13 +32,8 @@ class _MainScreenState extends State<MainScreen> {
     ];
   }
 
-  void _onTabSelected(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-
-    // Sempre que voltar para Home,
-    // recarrega os dados da tela.
+  void irParaAba(int index) {
+    setState(() => _currentIndex = index);
     if (index == 0) {
       _homeKey.currentState?.recarregar();
     }
@@ -67,7 +63,7 @@ class _MainScreenState extends State<MainScreen> {
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: _onTabSelected,
+        onTap: irParaAba,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),

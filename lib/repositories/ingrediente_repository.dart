@@ -47,4 +47,14 @@ class IngredienteRepository {
 
     return novo;
   }
+
+    Future<Map<String, dynamic>?> buscarPorId(String id) async {
+    final resultado = await _client
+        .from('ingrediente')
+        .select('id, nome, unidade_padrao, tipo')
+        .eq('id', id)
+        .maybeSingle();
+
+    return resultado;
+  }
 }
