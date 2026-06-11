@@ -120,30 +120,9 @@ Uma decisão central do projeto é a separação entre dados remotos e locais:
 
 ---
 
-## ⚠️ Decisões técnicas e melhorias futuras
-
-Durante o desenvolvimento, algumas decisões foram tomadas por pragmatismo e outras representam pontos de evolução planejados:
-
-- **Auth manual com SHA-256**: a autenticação foi implementada com hash direto na tabela `usuario`. Uma evolução natural seria migrar para o Auth nativo do Supabase, ganhando reset de senha por e-mail e gerenciamento de sessão.
-- **Credenciais no código-fonte**: a `anonKey` do Supabase está hardcoded no `main.dart`. Em produção, o ideal é utilizar variáveis de ambiente com `flutter_dotenv`.
-- **Estoque em desenvolvimento**: a tela de estoque exibe dados mockados enquanto a integração com o `EstoqueRepository` (já implementado) está sendo finalizada.
-- **Persistência de sessão**: atualmente o estado de login é mantido apenas em memória. A próxima iteração incluirá persistência via `shared_preferences`.
-
----
-
-## 📋 Próximos passos
-
-- [ ] Conectar tela de Estoque ao `EstoqueRepository`
-- [ ] Implementar "Minhas Receitas" no perfil do usuário
-- [ ] Persistir sessão de login entre reinicializações do app
-- [ ] Migrar autenticação para o Auth nativo do Supabase
-- [ ] Mover credenciais para variáveis de ambiente
-
----
-
 ## 👥 Equipe
 
-Desenvolvido como projeto acadêmico.
+Alunas de Ciência da Computação: Ana Clara e Daniela Gomes.
 
 ---
 
