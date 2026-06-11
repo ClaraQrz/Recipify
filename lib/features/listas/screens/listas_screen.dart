@@ -14,8 +14,8 @@ class ListasScreen extends StatefulWidget {
 class _ListasScreenState extends State<ListasScreen> {
   final _buscaCtrl = TextEditingController();
 
-  List<Map<String, dynamic>> _todasListas  = [];
-  List<Map<String, dynamic>> _listas       = [];
+  List<Map<String, dynamic>> _todasListas = [];
+  List<Map<String, dynamic>> _listas      = [];
   bool _carregando = true;
 
   @override
@@ -40,6 +40,8 @@ class _ListasScreenState extends State<ListasScreen> {
       }
       final listas = await ListaRepository.instance.todasAsListas(usuarioId);
       if (!mounted) return;
+      listas.sort((a, b) =>
+          (b['eh_favorita'] as int).compareTo(a['eh_favorita'] as int));
       setState(() {
         _todasListas = listas;
         _listas      = listas;
@@ -60,7 +62,6 @@ class _ListasScreenState extends State<ListasScreen> {
           : _todasListas.where((l) {
               final nome = (l['nome'] as String).toLowerCase();
               if (nome.contains(busca)) return true;
-              // busca também nos nomes dos itens
               final itens = l['itens'] as List;
               return itens.any((i) =>
                   (i['nome'] as String).toLowerCase().contains(busca));
@@ -80,7 +81,7 @@ class _ListasScreenState extends State<ListasScreen> {
         content: Text(
           jaFixada
               ? 'Deseja remover "${lista['nome']}" do home?'
-              : 'Deseja fixar "${lista['nome']}" no home? A lista atual será substituída.',
+              : 'Deseja fixar "${lista['nome']}" no home? A lista atual sera substituida.',
         ),
         actions: [
           TextButton(
@@ -112,7 +113,7 @@ class _ListasScreenState extends State<ListasScreen> {
     showModalBottomSheet(
       context: outerContext,
       isScrollControlled: true,
-      backgroundColor: AppTheme.cardBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -126,11 +127,11 @@ class _ListasScreenState extends State<ListasScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Nova lista',
+              Text('Nova lista',
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textDark)),
+                      color: AppTheme.textDarkOf(context))),
               const SizedBox(height: 16),
               TextField(
                 controller: nomeCtrl,
@@ -143,12 +144,11 @@ class _ListasScreenState extends State<ListasScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
-                  final nome      = nomeCtrl.text.trim();
+                  final nome = nomeCtrl.text.trim();
                   if (nome.isEmpty) return;
                   final usuarioId =
                       AuthService.instance.usuarioLogado?['id']?.toString();
                   if (usuarioId == null) return;
-
                   try {
                     final listaId =
                         await ListaRepository.instance.criarLista(
@@ -177,10 +177,41 @@ class _ListasScreenState extends State<ListasScreen> {
     );
   }
 
+  Future<void> _confirmarDeletarLista(String listaId, String nome) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: Text('Excluir lista',
+            style: TextStyle(color: AppTheme.textDarkOf(context))),
+        content: Text(
+          'Tem certeza que quer excluir "$nome"? Todos os itens serao removidos.',
+          style: TextStyle(color: AppTheme.textDarkOf(context)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar',
+                style: TextStyle(color: AppTheme.textGray)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      await ListaRepository.instance.deletarLista(listaId);
+      _carregarListas();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.cardBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -188,7 +219,7 @@ class _ListasScreenState extends State<ListasScreen> {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.6),
+                  color: AppTheme.surfaceOf(context).withOpacity(0.8),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TextField(
@@ -208,7 +239,7 @@ class _ListasScreenState extends State<ListasScreen> {
                 const Icon(Icons.info_outline, size: 13, color: AppTheme.textGray),
                 const SizedBox(width: 4),
                 Text(
-                  'Segure uma lista para fixá-la no home',
+                  'Segure uma lista para fixa-la no home',
                   style: TextStyle(
                       fontSize: 11,
                       color: AppTheme.textGray.withOpacity(0.7)),
@@ -218,8 +249,7 @@ class _ListasScreenState extends State<ListasScreen> {
               Expanded(
                 child: _carregando
                     ? const Center(
-                        child: CircularProgressIndicator(
-                            color: AppTheme.primary))
+                        child: CircularProgressIndicator(color: AppTheme.primary))
                     : _listas.isEmpty
                         ? Center(
                             child: Column(
@@ -247,9 +277,11 @@ class _ListasScreenState extends State<ListasScreen> {
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) {
-                                final lista  = _listas[index];
-                                final fixada = lista['eh_favorita'] == 1;
-                                final itens  = (lista['itens'] as List)
+                                final lista     = _listas[index];
+                                final listaId   = lista['id'] as String;
+                                final listaNome = lista['nome'] as String;
+                                final favorita  = lista['eh_favorita'] == 1;
+                                final itens = (lista['itens'] as List)
                                     .map((i) => {
                                           'id':       i['id'] as String,
                                           'nome':     i['nome'] as String,
@@ -264,8 +296,8 @@ class _ListasScreenState extends State<ListasScreen> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (_) => DetalheListaScreen(
-                                          listaId:   lista['id'] as String,
-                                          listaNome: lista['nome'] as String,
+                                          listaId:   listaId,
+                                          listaNome: listaNome,
                                         ),
                                       ),
                                     );
@@ -273,12 +305,20 @@ class _ListasScreenState extends State<ListasScreen> {
                                   },
                                   onLongPress: () => _fixarLista(lista),
                                   child: _ListaCard(
-                                    nome:   lista['nome'] as String,
-                                    itens:  itens,
-                                    fixada: fixada,
+                                    listaId:      listaId,
+                                    nome:         listaNome,
+                                    itens:        itens,
+                                    favorita:     favorita,
                                     onToggleItem: (itemId, comprado) =>
                                         ListaRepository.instance
                                             .toggleItem(itemId, comprado),
+                                    onDeleteItem: (itemId) async {
+                                      await ListaRepository.instance
+                                          .deletarItem(itemId);
+                                      _carregarListas();
+                                    },
+                                    onDeleteLista: () =>
+                                        _confirmarDeletarLista(listaId, listaNome),
                                   ),
                                 );
                               },
@@ -299,16 +339,22 @@ class _ListasScreenState extends State<ListasScreen> {
 }
 
 class _ListaCard extends StatefulWidget {
+  final String listaId;
   final String nome;
   final List<Map<String, dynamic>> itens;
-  final bool fixada;
+  final bool favorita;
   final Future<void> Function(String itemId, bool comprado) onToggleItem;
+  final Future<void> Function(String itemId) onDeleteItem;
+  final VoidCallback onDeleteLista;
 
   const _ListaCard({
+    required this.listaId,
     required this.nome,
     required this.itens,
-    required this.fixada,
+    required this.favorita,
     required this.onToggleItem,
+    required this.onDeleteItem,
+    required this.onDeleteLista,
   });
 
   @override
@@ -325,12 +371,18 @@ class _ListaCardState extends State<_ListaCard> {
   }
 
   @override
+  void didUpdateWidget(covariant _ListaCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _marcados = widget.itens.map((i) => i['comprado'] as bool).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.surfaceOf(context),
         borderRadius: BorderRadius.circular(16),
-        border: widget.fixada
+        border: widget.favorita
             ? Border.all(color: AppTheme.primary, width: 2)
             : null,
         boxShadow: [
@@ -346,24 +398,23 @@ class _ListaCardState extends State<_ListaCard> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
             child: Row(children: [
-              const Icon(Icons.shopping_cart_outlined,
-                  color: AppTheme.textDark, size: 22),
+              Icon(Icons.shopping_cart_outlined,
+                  color: AppTheme.textDarkOf(context), size: 22),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(widget.nome,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textDark)),
+                        color: AppTheme.textDarkOf(context))),
               ),
-              if (widget.fixada)
+              if (widget.favorita)
                 const Padding(
-                  padding: EdgeInsets.only(right: 6),
+                  padding: EdgeInsets.only(right: 4),
                   child: Icon(Icons.push_pin, size: 16, color: AppTheme.primary),
                 ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppTheme.primary,
                   borderRadius: BorderRadius.circular(20),
@@ -374,12 +425,19 @@ class _ListaCardState extends State<_ListaCard> {
                         fontSize: 11,
                         fontWeight: FontWeight.bold)),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
+              IconButton(
+                onPressed: widget.onDeleteLista,
+                icon: const Icon(Icons.delete_outline,
+                    color: Colors.red, size: 20),
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Excluir lista',
+              ),
               Checkbox(
                 value: _marcados.isNotEmpty && _marcados.every((m) => m),
                 onChanged: (v) {
-                  setState(
-                      () => _marcados = List.filled(widget.itens.length, v!));
+                  setState(() =>
+                      _marcados = List.filled(widget.itens.length, v!));
                   for (final item in widget.itens) {
                     widget.onToggleItem(item['id'] as String, v!);
                   }
@@ -392,70 +450,58 @@ class _ListaCardState extends State<_ListaCard> {
             ]),
           ),
           ...List.generate(widget.itens.length, (i) {
-            final item   = widget.itens[i];
-            final isLast = i == widget.itens.length - 1;
+            final item = widget.itens[i];
             return Column(children: [
               const Divider(height: 1, color: Color(0xFFE0C9A6)),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 10),
-                child: Row(children: [
-                  Expanded(
-                    child: Text(item['nome'] as String,
+              Dismissible(
+                key: Key(item['id'] as String),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 16),
+                  color: Colors.red.withOpacity(0.15),
+                  child: const Icon(Icons.delete_outline, color: Colors.red),
+                ),
+                onDismissed: (_) => widget.onDeleteItem(item['id'] as String),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
+                  child: Row(children: [
+                    Expanded(
+                      child: Text(item['nome'] as String,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textDarkOf(context),
+                              decoration: _marcados[i]
+                                  ? TextDecoration.lineThrough
+                                  : null)),
+                    ),
+                    Text(item['qtd'] as String,
                         style: TextStyle(
                             fontSize: 14,
-                            color: AppTheme.textDark,
-                            decoration: _marcados[i]
-                                ? TextDecoration.lineThrough
-                                : null)),
-                  ),
-                  Text(item['qtd'] as String,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textDark)),
-                  const SizedBox(width: 8),
-                  Checkbox(
-                    value: _marcados[i],
-                    onChanged: (v) {
-                      setState(() => _marcados[i] = v!);
-                      widget.onToggleItem(item['id'] as String, v!);
-                    },
-                    activeColor: AppTheme.primary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4)),
-                    side: const BorderSide(color: AppTheme.textGray),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ]),
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textDarkOf(context))),
+                    const SizedBox(width: 8),
+                    Checkbox(
+                      value: _marcados[i],
+                      onChanged: (v) {
+                        setState(() => _marcados[i] = v!);
+                        widget.onToggleItem(item['id'] as String, v!);
+                      },
+                      activeColor: AppTheme.primary,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4)),
+                      side: const BorderSide(color: AppTheme.textGray),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ]),
+                ),
               ),
-              if (isLast) ...[
-                const Divider(height: 1, color: Color(0xFFE0C9A6)),
-                _linhaVazia(),
-                const Divider(height: 1, color: Color(0xFFE0C9A6)),
-                _linhaVazia(),
-                const SizedBox(height: 4),
-              ],
             ]);
           }),
+          const SizedBox(height: 4),
         ],
       ),
     );
   }
-
-  Widget _linhaVazia() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              width: 18, height: 18,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.textGray),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ],
-        ),
-      );
 }

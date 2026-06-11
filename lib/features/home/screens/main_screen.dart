@@ -18,34 +18,45 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      const HomeScreen(),
+      const ReceitasScreen(),
+      const ListasScreen(),
+      const EstoqueScreen(),
+    ];
+  }
+
   void irParaAba(int index) {
     setState(() => _currentIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      const HomeScreen(),
-      const ReceitasScreen(),
-      const ListasScreen(),
-      const EstoqueScreen(),
-    ];
-
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 16,
-        title: Image.asset('assets/images/Logo.png', height: 36),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            ),
+          titleSpacing: 16,
+          title: Image.asset(
+            Theme.of(context).brightness == Brightness.dark
+                ? 'assets/images/Logo_white.png'
+                : 'assets/images/Logo.png',
+            height: 36,
           ),
-        ],
-      ),
-      body: screens[_currentIndex],
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+            ),
+          ],
+        ),
+      body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: irParaAba,

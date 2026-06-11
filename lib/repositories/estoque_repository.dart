@@ -38,7 +38,6 @@ class EstoqueRepository {
   ) async {
     if (rows.isEmpty) return [];
 
-    // busca todos os ids únicos no Supabase de uma vez
     final ids = rows.map((r) => r['ingrediente_id'] as String).toSet().toList();
     final ingredientes = <String, String>{};
 
@@ -127,5 +126,15 @@ class EstoqueRepository {
     ''', [usuarioId, hoje, limite]);
 
     return _enriquecerComIngrediente(rows);
+  }
+
+  /// Total de itens no estoque do usuário
+  Future<int> contarItens(String usuarioId) async {
+    final db = await DatabaseService.instance.db;
+    final resultado = await db.rawQuery(
+      'SELECT COUNT(*) as total FROM estoque WHERE usuario_id = ?',
+      [usuarioId],
+    );
+    return Sqflite.firstIntValue(resultado) ?? 0;
   }
 }

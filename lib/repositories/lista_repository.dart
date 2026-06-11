@@ -29,6 +29,27 @@ class ListaRepository {
     return lista;
   }
 
+  Future<void> definirFavorita(
+    String usuarioId,
+    String listaId,
+  ) async {
+    final db = await DatabaseService.instance.db;
+
+    await db.update(
+      'lista',
+      {'eh_favorita': 0},
+      where: 'dono_id = ?',
+      whereArgs: [usuarioId],
+    );
+
+    await db.update(
+      'lista',
+      {'eh_favorita': 1},
+      where: 'id = ?',
+      whereArgs: [listaId],
+    );
+  }
+
   Future<List<Map<String, dynamic>>> todasAsListas(String usuarioId) async {
     final db = await DatabaseService.instance.db;
 
@@ -109,6 +130,31 @@ class ListaRepository {
       {'comprado': comprado ? 1 : 0},
       where: 'id = ?',
       whereArgs: [itemId],
+    );
+  }
+
+  /// Deleta um item da lista
+  Future<void> deletarItem(String itemId) async {
+    final db = await DatabaseService.instance.db;
+    await db.delete(
+      'lista_item_livre',
+      where: 'id = ?',
+      whereArgs: [itemId],
+    );
+  }
+
+  /// Deleta a lista e todos os seus itens
+  Future<void> deletarLista(String listaId) async {
+    final db = await DatabaseService.instance.db;
+    await db.delete(
+      'lista_item_livre',
+      where: 'lista_id = ?',
+      whereArgs: [listaId],
+    );
+    await db.delete(
+      'lista',
+      where: 'id = ?',
+      whereArgs: [listaId],
     );
   }
 

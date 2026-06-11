@@ -24,8 +24,8 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
   Set<String> _favoritas                    = {};
 
   final List<String> _categorias = [
-    'Todas', 'Veganas', 'Rápidas', 'Doces', 'Salgadas', 'Sobremesas'
-  ];
+  'Todas', 'Salgadas', 'Doces', 'Sobremesas', 'Veganas', 'Vegetarianas', 'Rápidas', 'Elaboradas', 'Outras'
+];
 
   @override
   void initState() {

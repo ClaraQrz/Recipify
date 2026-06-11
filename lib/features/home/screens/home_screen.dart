@@ -21,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _topSemanal = [];
   Map<String, dynamic>?      _listaFav;
   List<Map<String, dynamic>> _vencendo   = [];
+  Map<String, Map<String, dynamic>> _sugestoes = {};
 
   @override
   void initState() {
@@ -41,11 +42,28 @@ class _HomeScreenState extends State<HomeScreen> {
         ListaRepository.instance.listaFavorita(uid),
         EstoqueRepository.instance.vencendoEmBreve(uid),
       ]);
+      final vencendo = results[2] as List<Map<String, dynamic>>;
+
+      final sugestoes = <String, Map<String, dynamic>>{};
+      final todasReceitas = await ReceitaRepository.instance.listarReceitas();
+      for (final item in vencendo) {
+        final nomeIngrediente = (item['ingrediente'] as String).toLowerCase();
+        for (final receita in todasReceitas) {
+          final titulo = (receita['titulo'] as String? ?? '').toLowerCase();
+          final descricao = (receita['descricao'] as String? ?? '').toLowerCase();
+          if (titulo.contains(nomeIngrediente) || descricao.contains(nomeIngrediente)) {
+            sugestoes[item['id'] as String] = receita;
+            break;
+          }
+        }
+      }
+
       if (!mounted) return;
       setState(() {
         _topSemanal = results[0] as List<Map<String, dynamic>>;
         _listaFav   = results[1] as Map<String, dynamic>?;
-        _vencendo   = results[2] as List<Map<String, dynamic>>;
+        _vencendo   = vencendo;
+        _sugestoes  = sugestoes;
         _carregando = false;
       });
     } catch (e) {
@@ -68,99 +86,32 @@ class _HomeScreenState extends State<HomeScreen> {
     ).then((_) => _carregar());
   }
 
-  void _irParaListas() => MainScreen.of(context)?.irParaAba(2);
+  void _irParaEstoque() => MainScreen.of(context)?.irParaAba(3);
 
   @override
   Widget build(BuildContext context) {
     if (_carregando) return const Center(child: CircularProgressIndicator());
 
-    final apelido = AuthService.instance.usuarioLogado?['apelido'] ?? 'Usuário';
-
     return RefreshIndicator(
       onRefresh: _carregar,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: AppTheme.pagePadding,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Olá, $apelido 👋',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text('O que vamos cozinhar hoje?',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: AppTheme.textGray)),
+            _secaoTitulo('Top semanal'),
+            const SizedBox(height: 12),
+            _topSemanal.isEmpty
+                ? _vazio('Nenhuma receita em destaque essa semana.')
+                : _topSemanalWidget(),
 
             const SizedBox(height: 28),
 
-            // ── TOP SEMANAL ──────────────────────────────────────────────
-            _secaoTitulo('🏆 Top Semanal'),
-            const SizedBox(height: 10),
-            _topSemanal.isEmpty
-                ? _estadoVazio('Nenhuma receita em destaque essa semana.')
-                : SizedBox(
-                    height: 180,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _topSemanal.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, i) {
-                        final item    = _topSemanal[i];
-                        final receita = item['receita'] as Map<String, dynamic>? ?? {};
-                        final usuarioMap = receita['usuario'];
-                        final autor = usuarioMap is Map
-                            ? (usuarioMap['apelido'] as String? ?? 'Desconhecido')
-                            : 'Desconhecido';
-
-                        return GestureDetector(
-                          onTap: () async {
-                            final receitaId = receita['id'] as String;
-                            final completa = await ReceitaRepository.instance.buscarPorId(receitaId);
-                            if (completa == null || !context.mounted) return;
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ReceitaDetalheScreen(
-                                  receita:    completa,
-                                  favoritada: false,
-                                ),
-                              ),
-                            );
-                          },
-                          child: _topCard(
-                            posicao: item['posicao'] as int,
-                            titulo:  receita['titulo'] as String? ?? '',
-                            autor:   autor,
-                            media:   (item['pontuacao'] as num? ?? 0).toDouble(),
-                            imgUrl:  receita['imagem_url'] as String?,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-            // ── LISTA FAVORITA ───────────────────────────────────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _secaoTitulo('📋 Lista favorita'),
-                GestureDetector(
-                  onTap: _irParaListas,
-                  child: const Text('Ver todas',
-                      style: TextStyle(
-                          color: AppTheme.primary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
+            _secaoTitulo('Listas'),
+            const SizedBox(height: 12),
             _listaFav == null
-                ? _estadoVazio('Nenhuma lista marcada como favorita.')
+                ? _vazio('Nenhuma lista marcada como favorita.')
                 : GestureDetector(
                     onTap: _abrirListaFavorita,
                     child: _listaCard(_listaFav!),
@@ -168,220 +119,351 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 28),
 
-            // ── VENCIMENTO ───────────────────────────────────────────────
-            _secaoTitulo('⚠️ Vencendo em breve'),
-            const SizedBox(height: 10),
+            _secaoTitulo('Estoque'),
+            const SizedBox(height: 12),
             _vencendo.isEmpty
-                ? _estadoVazio('Nenhum item vencendo nos próximos 7 dias.')
-                : Column(children: _vencendo.map(_estoqueCard).toList()),
+                ? _vazio('Nenhum item vencendo nos próximos 7 dias.')
+                : Column(
+                    children: _vencendo.map((item) {
+                      final sugestao = _sugestoes[item['id'] as String];
+                      return _estoqueCard(item, sugestao);
+                    }).toList(),
+                  ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _secaoTitulo(String texto) => Text(texto,
-      style: const TextStyle(
-          fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.primary));
+  Widget _secaoTitulo(String texto) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 22,
+          decoration: BoxDecoration(
+            color: AppTheme.primary,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          texto,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.primary,
+          ),
+        ),
+      ],
+    );
+  }
 
-  Widget _estadoVazio(String mensagem) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Text(mensagem,
+  Widget _vazio(String msg) => Padding(
+        padding: const EdgeInsets.only(top: 4, bottom: 4),
+        child: Text(msg,
             style: const TextStyle(color: AppTheme.textGray, fontSize: 13)),
       );
 
-  Widget _topCard({
-    required int    posicao,
-    required String titulo,
-    required String autor,
-    required double media,
-    String? imgUrl,
-  }) {
-    final medalhas = ['🥇', '🥈', '🥉'];
-    final medalha  = posicao <= 3 ? medalhas[posicao - 1] : '$posicao°';
+  // ── TOP SEMANAL ───────────────────────────────────────────────────
+
+  Widget _topSemanalWidget() {
+    final sorted = [..._topSemanal]
+      ..sort((a, b) => (a['posicao'] as int).compareTo(b['posicao'] as int));
+
+    final reordenado = <Map<String, dynamic>>[];
+    if (sorted.length >= 2) reordenado.add(sorted[1]); // 2°
+    if (sorted.isNotEmpty) reordenado.add(sorted[0]);  // 1° (centro)
+    if (sorted.length >= 3) reordenado.add(sorted[2]); // 3°
+
+    return SizedBox(
+      height: 240,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: reordenado.asMap().entries.map((e) {
+          final idx      = e.key;
+          final item     = e.value;
+          final receita  = item['receita'] as Map<String, dynamic>? ?? {};
+          final posicao  = item['posicao'] as int;
+          final isCentro = posicao == 1;
+          final medalhas = ['🥇', '🥈', '🥉'];
+          final medalha  = posicao <= 3 ? medalhas[posicao - 1] : '$posicao°';
+
+          final titulo = receita['titulo'] as String? ?? '';
+          final usuarioMap = receita['usuario'];
+          final autor = usuarioMap is Map
+              ? (usuarioMap['apelido'] as String? ?? '')
+              : '';
+          final media = (receita['media_estrelas'] as num?)?.toDouble() ?? 0;
+
+          return Expanded(
+            child: GestureDetector(
+              onTap: () async {
+                final id = receita['id'] as String?;
+                if (id == null) return;
+                final completa = await ReceitaRepository.instance.buscarPorId(id);
+                if (completa == null || !context.mounted) return;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ReceitaDetalheScreen(
+                      receita: completa,
+                      favoritada: false,
+                    ),
+                  ),
+                );
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: EdgeInsets.only(
+                  left:  idx == 0 ? 0 : 4,
+                  right: idx == reordenado.length - 1 ? 0 : 4,
+                  bottom: isCentro ? 0 : 24,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // imagem
+                    receita['imagem_url'] != null &&
+                            (receita['imagem_url'] as String).isNotEmpty
+                        ? Image.network(receita['imagem_url'] as String,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                Container(color: AppTheme.secondary))
+                        : Container(color: AppTheme.secondary),
+                    // gradiente
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Colors.black87],
+                          stops: [0.35, 1.0],
+                        ),
+                      ),
+                    ),
+                    // info na base
+                    Positioned(
+                      bottom: 8,
+                      left: 6,
+                      right: 6,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(medalha,
+                              style: TextStyle(fontSize: isCentro ? 22 : 18)),
+                          const SizedBox(height: 2),
+                          Text(
+                            titulo,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isCentro ? 12 : 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (autor.isNotEmpty)
+                            Text(
+                              autor,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: isCentro ? 10 : 9,
+                              ),
+                            ),
+                          if (media > 0) ...[
+                            const SizedBox(height: 2),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.star,
+                                    size: 11, color: Colors.amber),
+                                const SizedBox(width: 2),
+                                Text(
+                                  media.toStringAsFixed(1),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: isCentro ? 10 : 9,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // ── LISTA FAVORITA ────────────────────────────────────────────────
+
+  Widget _listaCard(Map<String, dynamic> lista) {
+    final itensRaw  = lista['itens'] as List;
+    final itens     = itensRaw.cast<Map<String, dynamic>>();
+    final pendentes = itens.where((i) => i['comprado'] == 0).toList();
 
     return Container(
-      width: 150,
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
-        color: AppTheme.cardBg,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Imagem ou cor sólida de fundo
-          Positioned.fill(
-            child: imgUrl != null && imgUrl.isNotEmpty
-                ? Image.network(imgUrl, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: AppTheme.primary))
-                : Container(color: AppTheme.primary),
-          ),
-
-          // Gradiente escuro na parte inferior
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.75),
-                  ],
-                  stops: const [0.3, 1.0],
+          Row(children: [
+            Expanded(
+              child: Text(
+                lista['nome'] as String,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: AppTheme.textDark,
                 ),
               ),
             ),
-          ),
-
-          // Medalha top esquerdo
-          Positioned(
-            top: 8, left: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: Colors.black45,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(medalha, style: const TextStyle(fontSize: 13)),
-            ),
-          ),
-
-          // Estrela top direito
-          Positioned(
-            top: 10, right: 8,
-            child: Row(children: [
-              const Icon(Icons.star, color: Colors.amber, size: 13),
-              const SizedBox(width: 2),
-              Text(media.toStringAsFixed(1),
+            const Icon(Icons.push_pin, size: 18, color: AppTheme.primary),
+          ]),
+          if (pendentes.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ...pendentes.take(4).map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: Row(children: [
+                    Container(
+                      width: 7, height: 7,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.textDark,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      item['nome'] as String? ?? '',
+                      style: const TextStyle(fontSize: 13, color: AppTheme.textDark),
+                    ),
+                  ]),
+                )),
+            if (pendentes.length > 4)
+              Text('+ ${pendentes.length - 4} itens',
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold)),
-            ]),
-          ),
-
-          // Título e autor na parte inferior
-          Positioned(
-            bottom: 0, left: 0, right: 0,
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(titulo,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Text('por $autor',
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 11),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-          ),
+                      color: AppTheme.textGray, fontSize: 12)),
+          ],
+          if (itens.isEmpty)
+            const Text('Lista vazia.',
+                style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
         ],
       ),
     );
   }
 
-  Widget _listaCard(Map<String, dynamic> lista) {
-    final itens     = lista['itens'] as List<Map<String, dynamic>>;
-    final pendentes = itens.where((i) => i['comprado'] == 0).toList();
-    final comprados = itens.where((i) => i['comprado'] == 1).length;
-    final total     = itens.length;
+  // ── ESTOQUE CARD ──────────────────────────────────────────────────
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              const Icon(Icons.list_alt, color: AppTheme.primary, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(lista['nome'] as String,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15)),
-              ),
-              Text('$comprados/$total',
-                  style: const TextStyle(
-                      color: AppTheme.textGray, fontSize: 12)),
-              const SizedBox(width: 6),
-              const Icon(Icons.chevron_right,
-                  color: AppTheme.textGray, size: 18),
-            ]),
-            if (pendentes.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              ...pendentes.take(4).map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(children: [
-                      const Icon(Icons.circle,
-                          size: 6, color: AppTheme.primary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${item['quantidade']} de ${item['nome']}',
-                          style: const TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ]),
-                  )),
-              if (pendentes.length > 4)
-                Text('+ ${pendentes.length - 4} itens',
-                    style: const TextStyle(
-                        color: AppTheme.textGray, fontSize: 12)),
-            ],
-            if (total == 0)
-              const Text('Lista vazia.',
-                  style: TextStyle(color: AppTheme.textGray, fontSize: 13)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _estoqueCard(Map<String, dynamic> item) {
+  Widget _estoqueCard(Map<String, dynamic> item, Map<String, dynamic>? sugestao) {
     final dias    = item['dias_restantes'] as int;
     final urgente = dias <= 2;
-    final cor     = urgente ? Colors.red : Colors.orange;
+    final corTag  = urgente ? AppTheme.warning : Colors.orange;
+    final labelDias = dias == 0
+        ? 'Vence hoje'
+        : dias == 1
+            ? 'Vence amanhã'
+            : 'Vence em ${dias}d';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Icon(Icons.inventory_2_outlined, color: cor),
-        title: Text(item['ingrediente'] as String),
-        subtitle: Text('${_fmt(item['quantidade'])} ${item['unidade']}',
-            style: const TextStyle(fontSize: 12)),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-              color: cor, borderRadius: BorderRadius.circular(8)),
-          child: Text(
-            dias == 0 ? 'Vence hoje' : dias == 1 ? 'Amanhã' : 'Em ${dias}d',
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.bold),
-          ),
+    return GestureDetector(
+      onTap: _irParaEstoque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Text(
+                      item['ingrediente'] as String,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
+                    const Text('  •  ',
+                        style: TextStyle(color: AppTheme.textGray)),
+                    Text(
+                      labelDias,
+                      style: TextStyle(
+                        color: corTag,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ]),
+                  if (sugestao != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Sugestão: ${sugestao['titulo']}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textGray,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.kitchen_outlined,
+              color: corTag,
+              size: 28,
+            ),
+          ],
         ),
       ),
     );

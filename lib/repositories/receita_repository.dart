@@ -131,27 +131,27 @@ class ReceitaRepository {
       });
     }
   }
-  
+
   Future<Map<String, dynamic>?> buscarPorId(String id) async {
-  final resultado = await _client
-      .from('receita')
-      .select('''
-        id,
-        titulo,
-        descricao,
-        tempo_minutos,
-        porcoes,
-        categoria,
-        imagem_url,
-        media_estrelas,
-        total_avaliacoes,
-        criado_em,
-        usuario!receita_autor_id_fkey ( id, apelido )
-      ''')
-      .eq('id', id)
-      .maybeSingle();
-  return resultado;
-}
+    final resultado = await _client
+        .from('receita')
+        .select('''
+          id,
+          titulo,
+          descricao,
+          tempo_minutos,
+          porcoes,
+          categoria,
+          imagem_url,
+          media_estrelas,
+          total_avaliacoes,
+          criado_em,
+          usuario!receita_autor_id_fkey ( id, apelido )
+        ''')
+        .eq('id', id)
+        .maybeSingle();
+    return resultado;
+  }
 
   /// IDs das receitas favoritadas pelo usuário (para marcar coração na lista)
   Future<Set<String>> idsFavoritas() async {

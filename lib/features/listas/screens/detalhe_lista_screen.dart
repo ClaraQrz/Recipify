@@ -89,42 +89,47 @@ class _DetalheListaScreenState extends State<DetalheListaScreen> {
                     ],
                   ),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _itens.length,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 1, color: Color(0xFFE0C9A6)),
-                  itemBuilder: (context, index) {
-                    final item    = _itens[index];
-                    final comprado = item['comprado'] == 1;
-                    return ListTile(
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 8),
-                      title: Text(
-                        item['nome'] as String,
-                        style: TextStyle(
-                          decoration: comprado ? TextDecoration.lineThrough : null,
-                          color: AppTheme.textDark,
+              : SingleChildScrollView(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _itens.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, color: Color(0xFFE0C9A6)),
+                    itemBuilder: (context, index) {
+                      final item = _itens[index];
+                      final comprado = item['comprado'] == 1;
+                      return ListTile(
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 8),
+                        title: Text(
+                          item['nome'] as String,
+                          style: TextStyle(
+                            decoration: comprado ? TextDecoration.lineThrough : null,
+                            color: AppTheme.textDark,
+                          ),
                         ),
-                      ),
-                      subtitle: (item['quantidade'] as String?)?.isNotEmpty == true
-                          ? Text(item['quantidade'] as String,
-                              style: const TextStyle(fontSize: 12, color: AppTheme.textGray))
-                          : null,
-                      trailing: Checkbox(
-                        value: comprado,
-                        onChanged: (v) async {
-                          await ListaRepository.instance
-                              .toggleItem(item['id'] as String, v!);
-                          _carregarItens();
-                        },
-                        activeColor: AppTheme.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4)),
-                        side: const BorderSide(color: AppTheme.textGray),
-                      ),
-                    );
-                  },
+                        subtitle: (item['quantidade'] as String?)?.isNotEmpty == true
+                            ? Text(item['quantidade'] as String,
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppTheme.textGray))
+                            : null,
+                        trailing: Checkbox(
+                          value: comprado,
+                          onChanged: (v) async {
+                            await ListaRepository.instance
+                                .toggleItem(item['id'] as String, v!);
+                            _carregarItens();
+                          },
+                          activeColor: AppTheme.primary,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4)),
+                          side: const BorderSide(color: AppTheme.textGray),
+                        ),
+                      );
+                    },
+                  ),
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _abrirModalAdicionarItem,
@@ -135,7 +140,7 @@ class _DetalheListaScreenState extends State<DetalheListaScreen> {
   }
 }
 
-// ── Modal separado pra manter estado sem fechar ao digitar ───────────────────
+// ── Modal separado pra manter estado sem fechar ao digitar ──────────────────
 
 class _ModalAdicionarItem extends StatefulWidget {
   final String listaId;
@@ -151,13 +156,13 @@ class _ModalAdicionarItem extends StatefulWidget {
 }
 
 class _ModalAdicionarItemState extends State<_ModalAdicionarItem> {
-  final _nomeCtrl     = TextEditingController();
-  final _qtdCtrl      = TextEditingController();
-  final _unidadeCtrl  = TextEditingController();
+  final _nomeCtrl    = TextEditingController();
+  final _qtdCtrl     = TextEditingController();
+  final _unidadeCtrl = TextEditingController();
 
   List<Map<String, dynamic>> _sugestoes = [];
-  bool _buscando  = false;
-  bool _salvando  = false;
+  bool _buscando = false;
+  bool _salvando = false;
   String? _erro;
 
   final List<String> _unidadesPadrao = [
@@ -261,7 +266,6 @@ class _ModalAdicionarItemState extends State<_ModalAdicionarItem> {
                   style: const TextStyle(color: Colors.red, fontSize: 13)),
             ),
 
-          // Nome com sugestões
           TextField(
             controller: _nomeCtrl,
             autofocus: true,
@@ -305,7 +309,6 @@ class _ModalAdicionarItemState extends State<_ModalAdicionarItem> {
 
           const SizedBox(height: 12),
 
-          // Quantidade + unidade
           Row(children: [
             Expanded(
               flex: 2,
@@ -328,8 +331,7 @@ class _ModalAdicionarItemState extends State<_ModalAdicionarItem> {
                   prefixIcon: const Icon(Icons.straighten_outlined),
                   suffixIcon: PopupMenuButton<String>(
                     icon: const Icon(Icons.arrow_drop_down),
-                    onSelected: (v) =>
-                        setState(() => _unidadeCtrl.text = v),
+                    onSelected: (v) => setState(() => _unidadeCtrl.text = v),
                     itemBuilder: (_) => _unidadesPadrao
                         .map((u) => PopupMenuItem(value: u, child: Text(u)))
                         .toList(),

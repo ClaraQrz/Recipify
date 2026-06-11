@@ -14,38 +14,33 @@ class EstoqueFormScreen extends StatefulWidget {
 }
 
 class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
-  // Ingrediente
   final _buscaController = TextEditingController();
   Map<String, dynamic>? _ingredienteSelecionado;
   List<Map<String, dynamic>> _sugestoes = [];
   bool _buscando = false;
   bool _mostrarCriar = false;
 
-  // Novo ingrediente
   String _tipoSelecionado = 'outro';
-  static const _tipos = ['grão', 'proteína', 'laticínio', 'vegetal', 'fruta', 'tempero', 'líquido', 'outro'];
+  static const _tipos = ['grao', 'proteina', 'laticinios', 'vegetal', 'fruta', 'tempero', 'liquido', 'outro'];
+  static const _tiposLabel = ['Grão', 'Proteína', 'Laticínios', 'Vegetal', 'Fruta', 'Tempero', 'Líquido', 'Outro'];
 
-  // Quantidade e unidade
   final _quantController = TextEditingController();
   String? _unidadeSelecionada;
   final _unidadeLivreController = TextEditingController();
   bool _unidadeLivre = false;
 
-  // Unidades por tipo
   static const _unidadesPorTipo = {
-    'líquido':   ['ml', 'l', 'xícara', 'colher de sopa', 'colher de chá'],
-    'grão':      ['g', 'kg', 'xícara', 'colher de sopa'],
-    'proteína':  ['g', 'kg', 'unidade', 'filé'],
-    'laticínio': ['ml', 'l', 'g', 'kg', 'unidade', 'fatia'],
-    'vegetal':   ['unidade', 'g', 'kg', 'maço', 'xícara'],
-    'fruta':     ['unidade', 'g', 'kg', 'xícara'],
-    'tempero':   ['g', 'colher de chá', 'colher de sopa', 'pitada', 'unidade'],
-    'outro':     ['unidade', 'g', 'kg', 'ml', 'l', 'pacote', 'caixa'],
+    'liquido':    ['ml', 'l', 'xícara', 'colher de sopa', 'colher de chá'],
+    'grao':       ['g', 'kg', 'xícara', 'colher de sopa'],
+    'proteina':   ['g', 'kg', 'unidade', 'filé'],
+    'laticinios': ['ml', 'l', 'g', 'kg', 'unidade', 'fatia'],
+    'vegetal':    ['unidade', 'g', 'kg', 'maço', 'xícara'],
+    'fruta':      ['unidade', 'g', 'kg', 'xícara'],
+    'tempero':    ['g', 'colher de chá', 'colher de sopa', 'pitada', 'unidade'],
+    'outro':      ['unidade', 'g', 'kg', 'ml', 'l', 'pacote', 'caixa'],
   };
 
-  // Vencimento
   DateTime? _vencimento;
-
   bool _salvando = false;
   bool get _editando => widget.item != null;
 
@@ -55,7 +50,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
     if (_editando) {
       _quantController.text = widget.item!['quantidade'].toString();
       final unidade = widget.item!['unidade'] as String? ?? '';
-      // verifica se a unidade está nas listas conhecidas
       final todasUnidades = _unidadesPorTipo.values.expand((e) => e).toSet();
       if (todasUnidades.contains(unidade)) {
         _unidadeSelecionada = unidade;
@@ -65,7 +59,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
       }
       final v = widget.item!['vencimento'] as String?;
       if (v != null) _vencimento = DateTime.tryParse(v);
-      // mostra nome do ingrediente no campo (readonly em edição)
       _buscaController.text = widget.item!['ingrediente'] as String? ?? '';
     }
   }
@@ -102,7 +95,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
       _sugestoes = [];
       _mostrarCriar = false;
       _tipoSelecionado = ing['tipo'] as String? ?? 'outro';
-      // pré-seleciona unidade padrão
       final padrao = ing['unidade_padrao'] as String?;
       final lista = _unidadesPorTipo[_tipoSelecionado] ?? _unidadesPorTipo['outro']!;
       _unidadeSelecionada = lista.contains(padrao) ? padrao : lista.first;
@@ -139,8 +131,7 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
       return;
     }
 
-    final quant =
-        double.tryParse(_quantController.text.replaceAll(',', '.'));
+    final quant = double.tryParse(_quantController.text.replaceAll(',', '.'));
     if (quant == null || quant <= 0) {
       _snack('Informe uma quantidade válida');
       return;
@@ -164,7 +155,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
           vencimento: _vencimento?.toIso8601String(),
         );
       } else {
-        debugPrint('SALVANDO: usuarioId=$usuarioId | ingredienteId=${_ingredienteSelecionado!['id']} | quant=$quant | unidade=$unidade');
         await EstoqueRepository.instance.adicionar(
           usuarioId: usuarioId,
           ingredienteId: _ingredienteSelecionado!['id'] as String,
@@ -172,9 +162,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
           unidade: unidade,
           vencimento: _vencimento?.toIso8601String(),
         );
-        final db = await DatabaseService.instance.db;
-        final check = await db.rawQuery('SELECT * FROM estoque');
-        debugPrint('ESTOQUE COMPLETO: $check');
       }
       if (!mounted) return;
       Navigator.pop(context);
@@ -185,6 +172,7 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
       if (mounted) setState(() => _salvando = false);
     }
   }
+
   void _snack(String msg) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(msg)));
@@ -202,8 +190,8 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
 
-            // ── Ingrediente ──────────────────────────────────
-            _label('Ingrediente'),
+            // ── Ingrediente ──────────────────────────────────────
+            _sectionLabel('Ingrediente'),
             const SizedBox(height: 8),
             TextField(
               controller: _buscaController,
@@ -230,108 +218,106 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
                             }),
                           )
                         : null,
-                border: const OutlineInputBorder(),
               ),
               onChanged: _editando ? null : _buscarIngredientes,
             ),
 
-            // Sugestões
-            if (_sugestoes.isNotEmpty)
-              Card(
-                margin: const EdgeInsets.only(top: 4),
+            if (_sugestoes.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Column(
-                  children: _sugestoes.map((ing) {
-                    return ListTile(
-                      dense: true,
-                      title: Text(ing['nome'] as String),
-                      subtitle: Text(ing['tipo'] as String? ?? ''),
-                      onTap: () => _selecionarIngrediente(ing),
-                    );
-                  }).toList(),
+                  children: _sugestoes.map((ing) => ListTile(
+                    dense: true,
+                    title: Text(ing['nome'] as String),
+                    subtitle: Text(ing['tipo'] as String? ?? ''),
+                    onTap: () => _selecionarIngrediente(ing),
+                  )).toList(),
                 ),
               ),
+            ],
 
-            // Botão criar novo
             if (_mostrarCriar && !_editando) ...[
+              const SizedBox(height: 20),
+              _sectionLabel('Tipo do ingrediente'),
               const SizedBox(height: 8),
-              _label('Tipo do ingrediente'),
-              const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
-                runSpacing: 4,
-                children: _tipos.map((tipo) {
+                runSpacing: 6,
+                children: List.generate(_tipos.length, (i) {
+                  final tipo = _tipos[i];
+                  final label = _tiposLabel[i];
                   final sel = tipo == _tipoSelecionado;
-                  return ChoiceChip(
-                    label: Text(tipo),
+                  return _chip(
+                    label: label,
                     selected: sel,
-                    selectedColor: AppTheme.primary,
-                    labelStyle: TextStyle(
-                      color: sel ? Colors.white : AppTheme.textDark,
-                    ),
-                    onSelected: (_) => setState(() {
+                    onTap: () => setState(() {
                       _tipoSelecionado = tipo;
                       _unidadeSelecionada = null;
                     }),
                   );
-                }).toList(),
+                }),
               ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
+              const SizedBox(height: 12),
+              // Botão "Criar" sem borda, estilo secundário
+              ElevatedButton.icon(
                 onPressed: _criarESelecionar,
                 icon: const Icon(Icons.add),
-                label: Text(
-                  'Criar "${_buscaController.text.trim()}" como $_tipoSelecionado',
+                label: Text('Criar "${_buscaController.text.trim()}"'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.surface,
+                  foregroundColor: AppTheme.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
 
             const SizedBox(height: 20),
 
-            // ── Quantidade ───────────────────────────────────
-            _label('Quantidade'),
+            // ── Quantidade ────────────────────────────────────────
+            _sectionLabel('Quantidade'),
             const SizedBox(height: 8),
             TextField(
               controller: _quantController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: 'Ex: 2',
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(hintText: 'Ex: 2'),
             ),
 
             const SizedBox(height: 20),
 
-            // ── Unidade ──────────────────────────────────────
-            _label('Unidade'),
+            // ── Unidade ───────────────────────────────────────────
+            _sectionLabel('Unidade'),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
-              runSpacing: 4,
+              runSpacing: 6,
               children: [
                 ..._unidadesAtuais.map((u) {
                   final sel = !_unidadeLivre && u == _unidadeSelecionada;
-                  return ChoiceChip(
-                    label: Text(u),
+                  return _chip(
+                    label: u,
                     selected: sel,
-                    selectedColor: AppTheme.primary,
-                    labelStyle: TextStyle(
-                      color: sel ? Colors.white : AppTheme.textDark,
-                    ),
-                    onSelected: (_) => setState(() {
+                    onTap: () => setState(() {
                       _unidadeSelecionada = u;
                       _unidadeLivre = false;
                     }),
                   );
                 }),
-                ChoiceChip(
-                  label: const Text('outra...'),
+                _chip(
+                  label: 'outra...',
                   selected: _unidadeLivre,
-                  selectedColor: AppTheme.secondary,
-                  labelStyle: TextStyle(
-                    color: _unidadeLivre ? Colors.white : AppTheme.textDark,
-                  ),
-                  onSelected: (_) => setState(() {
+                  onTap: () => setState(() {
                     _unidadeLivre = true;
                     _unidadeSelecionada = null;
                   }),
@@ -343,7 +329,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
               TextField(
                 controller: _unidadeLivreController,
                 decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
                   hintText: 'Ex: fatia, porção, lata...',
                 ),
               ),
@@ -351,11 +336,11 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
 
             const SizedBox(height: 20),
 
-            // ── Vencimento ───────────────────────────────────
-            _label('Vencimento (opcional)'),
+            // ── Vencimento ────────────────────────────────────────
+            _sectionLabel('Vencimento (opcional)'),
             const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () async {
+            GestureDetector(
+              onTap: () async {
                 final picked = await showDatePicker(
                   context: context,
                   initialDate: _vencimento ?? DateTime.now(),
@@ -364,27 +349,44 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
                 );
                 if (picked != null) setState(() => _vencimento = picked);
               },
-              icon: const Icon(Icons.calendar_today_outlined),
-              label: Text(
-                _vencimento == null
-                    ? 'Selecionar data'
-                    : '${_vencimento!.day.toString().padLeft(2, '0')}/'
-                      '${_vencimento!.month.toString().padLeft(2, '0')}/'
-                      '${_vencimento!.year}',
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.calendar_today_outlined,
+                      size: 18, color: AppTheme.textGray),
+                  const SizedBox(width: 10),
+                  Text(
+                    _vencimento == null
+                        ? 'Selecionar data'
+                        : '${_vencimento!.day.toString().padLeft(2, '0')}/'
+                          '${_vencimento!.month.toString().padLeft(2, '0')}/'
+                          '${_vencimento!.year}',
+                    style: TextStyle(
+                      color: _vencimento == null
+                          ? AppTheme.textGray
+                          : AppTheme.textDark,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (_vencimento != null)
+                    GestureDetector(
+                      onTap: () => setState(() => _vencimento = null),
+                      child: const Icon(Icons.clear,
+                          size: 18, color: AppTheme.textGray),
+                    ),
+                ]),
               ),
             ),
-            if (_vencimento != null) ...[
-              const SizedBox(height: 6),
-              TextButton(
-                onPressed: () => setState(() => _vencimento = null),
-                child: const Text('Remover data'),
-              ),
-            ],
 
             const SizedBox(height: 32),
 
-            // ── Salvar ───────────────────────────────────────
-            FilledButton(
+            // ── Salvar ────────────────────────────────────────────
+            ElevatedButton(
               onPressed: _salvando ? null : _salvar,
               child: _salvando
                   ? const SizedBox(
@@ -400,10 +402,39 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
     );
   }
 
-  Widget _label(String texto) => Text(
+  Widget _sectionLabel(String texto) => Text(
         texto,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          color: AppTheme.textDark,
+        ),
       );
+
+  /// Chip sem contorno, fundo surface quando não selecionado
+  Widget _chip({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppTheme.primary : AppTheme.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : AppTheme.textDark,
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
 }
