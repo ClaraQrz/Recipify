@@ -147,7 +147,6 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // AppBar com imagem
           SliverAppBar(
             expandedHeight: 260,
             pinned: true,
@@ -203,7 +202,6 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Avaliação
                   Row(children: [
                     ...List.generate(5, (i) {
                       final estrela = i + 1;
@@ -236,7 +234,6 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
 
                   const Divider(height: 32),
 
-                  // Ingredientes
                   const Text('Ingredientes',
                       style: TextStyle(
                           fontSize: 17,
@@ -277,7 +274,6 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
 
                   const Divider(height: 32),
 
-                  // Descrição / modo de preparo
                   if (descricao != null && descricao.isNotEmpty) ...[
                     const Text('Descrição e modo de preparo',
                         style: TextStyle(

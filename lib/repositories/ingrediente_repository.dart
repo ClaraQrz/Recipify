@@ -6,7 +6,6 @@ class IngredienteRepository {
 
   final _client = SupabaseService.instance.client;
 
-  /// Busca ingredientes por nome (busca parcial)
   Future<List<Map<String, dynamic>>> buscar(String termo) async {
     if (termo.trim().isEmpty) return [];
 
@@ -19,13 +18,11 @@ class IngredienteRepository {
     return List<Map<String, dynamic>>.from(resultado);
   }
 
-  /// Cria um novo ingrediente se não existir
   Future<Map<String, dynamic>> buscarOuCriar({
     required String nome,
     required String unidadePadrao,
     required String tipo,
   }) async {
-    // Tenta achar exato primeiro
     final existente = await _client
         .from('ingrediente')
         .select()

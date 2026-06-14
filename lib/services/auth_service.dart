@@ -23,7 +23,6 @@ class AuthService {
     required String senha,
     String? dataAniversario,
   }) async {
-    // Verifica se email já existe
     final existente = await _client
         .from('usuario')
         .select('id')
@@ -34,7 +33,6 @@ class AuthService {
       return {'sucesso': false, 'erro': 'E-mail já cadastrado.'};
     }
 
-    // Insere novo usuário — id é gerado pelo Supabase (gen_random_uuid)
     final novoUsuario = await _client
         .from('usuario')
         .insert({

@@ -1,28 +1,26 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Paleta principal — imutável
+
   static const Color primary   = Color(0xFFC92C39);
   static const Color secondary = Color(0xFFFFC15E);
   static const Color textLight = Color(0xFFFFFFFF);
   static const Color warning   = Color(0xFFA30021);
   static const Color success   = Color(0xFF27AE60);
 
-  // Light
   static const Color _lBackground = Color(0xFFFFC15E);
   static const Color _lSurface    = Color(0xFFF6DFBA);
   static const Color _lCardBg     = Color(0xFFF5EDE0);
   static const Color _lTextDark   = Color(0xFF000100);
   static const Color _lTextGray   = Color(0xFF666666);
 
-  // Dark — marrom quente
   static const Color _dBackground = Color(0xFF1E1410);
   static const Color _dSurface    = Color.fromARGB(255, 73, 53, 45);
   static const Color _dCardBg     = Color.fromARGB(255, 68, 44, 36);
   static const Color _dTextDark   = Color(0xFFF2E4D8);
   static const Color _dTextGray   = Color(0xFFAA8F80);
 
-  // Constantes legadas (light) — mantidas para não quebrar imports antigos
+ 
   static const Color background = _lBackground;
   static const Color surface    = _lSurface;
   static const Color cardBg     = _lCardBg;
@@ -33,7 +31,6 @@ class AppTheme {
   static const double defaultRadius = 16;
   static const EdgeInsets pagePadding = EdgeInsets.all(16);
 
-  // ── Helpers dinâmicos — use esses nas telas ──────────────────────────────
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
 
@@ -52,7 +49,6 @@ class AppTheme {
   static Color textGrayOf(BuildContext context) =>
       isDark(context) ? _dTextGray : _lTextGray;
 
-  // ── ThemeData ─────────────────────────────────────────────────────────────
   static ThemeData get light => _build(
     brightness: Brightness.light,
     scaffoldBg: _lCardBg,

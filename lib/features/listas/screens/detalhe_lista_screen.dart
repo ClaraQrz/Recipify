@@ -140,7 +140,6 @@ class _DetalheListaScreenState extends State<DetalheListaScreen> {
   }
 }
 
-// ── Modal separado pra manter estado sem fechar ao digitar ──────────────────
 
 class _ModalAdicionarItem extends StatefulWidget {
   final String listaId;

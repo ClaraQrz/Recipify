@@ -133,7 +133,6 @@ class ListaRepository {
     );
   }
 
-  /// Deleta um item da lista
   Future<void> deletarItem(String itemId) async {
     final db = await DatabaseService.instance.db;
     await db.delete(
@@ -143,7 +142,6 @@ class ListaRepository {
     );
   }
 
-  /// Deleta a lista e todos os seus itens
   Future<void> deletarLista(String listaId) async {
     final db = await DatabaseService.instance.db;
     await db.delete(
@@ -158,10 +156,8 @@ class ListaRepository {
     );
   }
 
-  /// Fixa ou desfixa uma lista como favorita no home
   Future<void> fixarLista(String listaId, bool fixar) async {
     final db = await DatabaseService.instance.db;
-    // Desfixar todas primeiro (só uma pode estar fixada)
     await db.update('lista', {'eh_favorita': 0});
     if (fixar) {
       await db.update(

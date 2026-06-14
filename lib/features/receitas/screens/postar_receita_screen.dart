@@ -237,7 +237,6 @@ class _PostarReceitaScreenState extends State<PostarReceitaScreen> {
                 child: Text(_erro!, style: const TextStyle(color: Colors.red, fontSize: 13)),
               ),
 
-            // ── Imagem ───────────────────────────────────────────────────
             GestureDetector(
               onTap: _selecionarImagem,
               child: Container(
@@ -266,7 +265,6 @@ class _PostarReceitaScreenState extends State<PostarReceitaScreen> {
 
             const SizedBox(height: 20),
 
-            // ── Informações básicas ──────────────────────────────────────
             _secao('Informações básicas'),
             const SizedBox(height: 10),
 
@@ -327,7 +325,6 @@ class _PostarReceitaScreenState extends State<PostarReceitaScreen> {
 
             const Divider(height: 32),
 
-            // ── Ingredientes ─────────────────────────────────────────────
             _secao('Ingredientes'),
             const SizedBox(height: 10),
 

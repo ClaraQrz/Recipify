@@ -22,7 +22,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    // Usa AuthService local (SQLite) — não Supabase
     if (AuthService.instance.estaLogado) {
       Navigator.pushReplacement(
         context,

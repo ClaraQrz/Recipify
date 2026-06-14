@@ -128,7 +128,6 @@ class EstoqueRepository {
     return _enriquecerComIngrediente(rows);
   }
 
-  /// Total de itens no estoque do usuário
   Future<int> contarItens(String usuarioId) async {
     final db = await DatabaseService.instance.db;
     final resultado = await db.rawQuery(

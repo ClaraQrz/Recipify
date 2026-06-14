@@ -7,7 +7,6 @@ class ReceitaRepository {
 
   final _client = SupabaseService.instance.client;
 
-  /// Top 5 da semana via tabela top_semanal do Supabase
   Future<List<Map<String, dynamic>>> topSemanal({int limite = 3}) async {
     final resultado = await _client
         .from('top_semanal')
@@ -28,7 +27,6 @@ class ReceitaRepository {
     return List<Map<String, dynamic>>.from(resultado);
   }
 
-  /// Todas as receitas publicadas com dados completos
   Future<List<Map<String, dynamic>>> listarReceitas({
     String? categoria,
   }) async {
@@ -57,7 +55,6 @@ class ReceitaRepository {
     return List<Map<String, dynamic>>.from(resultado);
   }
 
-  /// Receitas favoritadas pelo usuário logado
   Future<List<Map<String, dynamic>>> listarFavoritas() async {
     final uid = AuthService.instance.usuarioLogado?['id'];
     if (uid == null) return [];
@@ -86,7 +83,6 @@ class ReceitaRepository {
         .toList();
   }
 
-  /// Receitas postadas pelo usuário logado
   Future<List<Map<String, dynamic>>> minhasReceitas() async {
     final uid = AuthService.instance.usuarioLogado?['id'];
     if (uid == null) return [];
@@ -113,7 +109,6 @@ class ReceitaRepository {
     return List<Map<String, dynamic>>.from(resultado);
   }
 
-  /// Favoritar ou desfavoritar uma receita
   Future<void> toggleFavorito(String receitaId, bool favoritado) async {
     final uid = AuthService.instance.usuarioLogado?['id'];
     if (uid == null) return;
@@ -153,7 +148,6 @@ class ReceitaRepository {
     return resultado;
   }
 
-  /// IDs das receitas favoritadas pelo usuário (para marcar coração na lista)
   Future<Set<String>> idsFavoritas() async {
     final uid = AuthService.instance.usuarioLogado?['id'];
     if (uid == null) return {};

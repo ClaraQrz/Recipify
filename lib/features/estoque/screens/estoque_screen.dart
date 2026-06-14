@@ -109,7 +109,6 @@ class _EstoqueScreenState extends State<EstoqueScreen> {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Column(
           children: [
-            // ── Search bar (sem alteração) ──────────────────────────
             TextField(
               controller: _buscaController,
               decoration: InputDecoration(
@@ -128,7 +127,6 @@ class _EstoqueScreenState extends State<EstoqueScreen> {
             ),
             const SizedBox(height: 12),
 
-            // ── Conteúdo ────────────────────────────────────────────
             Expanded(
               child: _carregando
                   ? const Center(child: CircularProgressIndicator())
@@ -166,7 +164,6 @@ class _EstoqueScreenState extends State<EstoqueScreen> {
     );
   }
 
-  // ── Título de seção ──────────────────────────────────────────────
   SliverToBoxAdapter _secaoHeader(String titulo) {
     return SliverToBoxAdapter(
       child: Padding(
@@ -183,7 +180,6 @@ class _EstoqueScreenState extends State<EstoqueScreen> {
     );
   }
 
-  // ── Grid 2 colunas ───────────────────────────────────────────────
   SliverGrid _gridSliver(List<Map<String, dynamic>> itens) {
     return SliverGrid(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -199,7 +195,6 @@ class _EstoqueScreenState extends State<EstoqueScreen> {
     );
   }
 
-  // ── Card individual ──────────────────────────────────────────────
   Widget _card(Map<String, dynamic> item) {
     final dias = item['dias_restantes'] as int?;
     final corBadge = _corVencimento(dias);
@@ -225,7 +220,6 @@ class _EstoqueScreenState extends State<EstoqueScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Badge de vencimento (topo direito)
                 Align(
                   alignment: Alignment.centerRight,
                   child: temBadge
@@ -247,7 +241,6 @@ class _EstoqueScreenState extends State<EstoqueScreen> {
                         )
                       : const SizedBox(height: 18),
                 ),
-                // Ícone centralizado
                 Expanded(
                   child: Center(
                     child: Icon(
@@ -269,7 +262,6 @@ class _EstoqueScreenState extends State<EstoqueScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                // Quantidade + unidade
                 Text(
                   '${_fmtQtd(item['quantidade'])} ${item['unidade']}',
                   style: TextStyle(

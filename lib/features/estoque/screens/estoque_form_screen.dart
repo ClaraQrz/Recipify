@@ -190,7 +190,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
 
-            // ── Ingrediente ──────────────────────────────────────
             _sectionLabel('Ingrediente'),
             const SizedBox(height: 8),
             TextField(
@@ -262,7 +261,7 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
                 }),
               ),
               const SizedBox(height: 12),
-              // Botão "Criar" sem borda, estilo secundário
+
               ElevatedButton.icon(
                 onPressed: _criarESelecionar,
                 icon: const Icon(Icons.add),
@@ -285,7 +284,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
 
             const SizedBox(height: 20),
 
-            // ── Quantidade ────────────────────────────────────────
             _sectionLabel('Quantidade'),
             const SizedBox(height: 8),
             TextField(
@@ -296,7 +294,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
 
             const SizedBox(height: 20),
 
-            // ── Unidade ───────────────────────────────────────────
             _sectionLabel('Unidade'),
             const SizedBox(height: 8),
             Wrap(
@@ -336,7 +333,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
 
             const SizedBox(height: 20),
 
-            // ── Vencimento ────────────────────────────────────────
             _sectionLabel('Vencimento (opcional)'),
             const SizedBox(height: 8),
             GestureDetector(
@@ -385,7 +381,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
 
             const SizedBox(height: 32),
 
-            // ── Salvar ────────────────────────────────────────────
             ElevatedButton(
               onPressed: _salvando ? null : _salvar,
               child: _salvando
@@ -411,7 +406,6 @@ class _EstoqueFormScreenState extends State<EstoqueFormScreen> {
         ),
       );
 
-  /// Chip sem contorno, fundo surface quando não selecionado
   Widget _chip({
     required String label,
     required bool selected,

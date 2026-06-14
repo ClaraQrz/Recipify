@@ -76,7 +76,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
           icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Criar Conta'), // estilo já vem do AppBarTheme
+        title: const Text('Criar Conta'), 
       ),
       body: SafeArea(
         child: Center(
@@ -87,7 +87,6 @@ class _CadastroScreenState extends State<CadastroScreen> {
               children: [
                 const SizedBox(height: 16),
 
-                // Card igual ao do login
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
@@ -163,7 +162,6 @@ class _CadastroScreenState extends State<CadastroScreen> {
                             ),
                           ),
 
-                          // Erro
                           if (_erro != null) ...[
                             const SizedBox(height: 8),
                             Text(
@@ -175,7 +173,6 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
                           const SizedBox(height: 20),
 
-                          // Botão
                           ElevatedButton(
                             onPressed: _carregando ? null : _cadastrar,
                             child: _carregando
@@ -190,13 +187,11 @@ class _CadastroScreenState extends State<CadastroScreen> {
                                 : const Text('Criar conta'),
                           ),
 
-                          // Espaço para o chapéu não sobrepor
                           const SizedBox(height: 70),
                         ],
                       ),
                     ),
 
-                    // Chapéu flutuando igual ao login
                     Positioned(
                       bottom: -60,
                       right: -20,

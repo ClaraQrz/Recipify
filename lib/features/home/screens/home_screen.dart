@@ -167,7 +167,6 @@ class _HomeScreenState extends State<HomeScreen> {
             style: const TextStyle(color: AppTheme.textGray, fontSize: 13)),
       );
 
-  // ── TOP SEMANAL ───────────────────────────────────────────────────
 
   Widget _topSemanalWidget() {
     final sorted = [..._topSemanal]
@@ -320,7 +319,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── LISTA FAVORITA ────────────────────────────────────────────────
 
   Widget _listaCard(Map<String, dynamic> lista) {
     final itensRaw  = lista['itens'] as List;
@@ -389,7 +387,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── ESTOQUE CARD ──────────────────────────────────────────────────
 
   Widget _estoqueCard(Map<String, dynamic> item, Map<String, dynamic>? sugestao) {
     final dias    = item['dias_restantes'] as int;

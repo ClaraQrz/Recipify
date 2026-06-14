@@ -167,7 +167,6 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
             ),
           ),
 
-          // Filtros de categoria
           SizedBox(
             height: 36,
             child: ListView.separated(
@@ -203,7 +202,6 @@ class _ReceitasScreenState extends State<ReceitasScreen> {
 
           const SizedBox(height: 8),
 
-          // Lista de receitas
           Expanded(
             child: _carregando
                 ? const Center(child: CircularProgressIndicator())

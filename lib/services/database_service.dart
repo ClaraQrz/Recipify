@@ -28,7 +28,6 @@ class DatabaseService {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      // Adiciona tabela lista_item_livre se vier de versão antiga
       await db.execute('''
         CREATE TABLE IF NOT EXISTS lista_item_livre (
           id TEXT PRIMARY KEY,
@@ -64,7 +63,6 @@ class DatabaseService {
       )
     ''');
 
-    // Tabela livre — itens com nome e quantidade como texto
     await db.execute('''
       CREATE TABLE lista_item_livre (
         id TEXT PRIMARY KEY,
